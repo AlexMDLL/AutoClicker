@@ -1,15 +1,15 @@
   Features / Возможности:
-- 🎯 Zone Selection: Draw a rectangle on screen to click within it. / Выделите область на экране для кликов.
-- 🪟 Background Mode: Click in minimized or background windows. / Кликайте в свернутые или фоновые окна.
-- ⚙️ Flexible Settings: Interval (h/m/s/ms), mouse button (L/R/M), cyclic mode (click/rest). / Гибкая настройка интервала, кнопки мыши и циклического режима.
-- 🎲 Randomization: Random offset within zone for human-like behavior. / Случайное смещение внутри зоны для естественности.
-- 💾 Auto-Save: Settings saved to JSON automatically. / Автосохранение настроек в JSON.
-- ⌨️ Hotkeys: Customizable start/stop key. / Настраиваемая горячая клавиша старта/стопа.
-- 🎨 Themes: Dark & Light UI themes. / Тёмная и светлая темы интерфейса.
+-  Zone Selection: Draw a rectangle on screen to click within it. / Выделите область на экране для кликов.
+-  Background Mode: Click in minimized or background windows. / Кликайте в свернутые или фоновые окна.
+-  Flexible Settings: Interval (h/m/s/ms), mouse button (L/R/M), cyclic mode (click/rest). / Гибкая настройка интервала, кнопки мыши и циклического режима.
+-  Randomization: Random offset within zone for human-like behavior. / Случайное смещение внутри зоны для естественности.
+-  Auto-Save: Settings saved to JSON automatically. / Автосохранение настроек в JSON.
+-  Hotkeys: Customizable start/stop key. / Настраиваемая горячая клавиша старта/стопа.
+-  Themes: Dark & Light UI themes. / Тёмная и светлая темы интерфейса.
 
 
 
- 🪟 How to Use Background Mode / Как использовать фоновый режим:
+  How to Use Background Mode / Как использовать фоновый режим:
 
 English:
 1. Click "Select Window" button.
