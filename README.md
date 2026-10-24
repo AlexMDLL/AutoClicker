@@ -58,7 +58,7 @@ high-precision timing and clear stats.
 / Modern picker: HSV field, hue slider, editable HEX/RGB, copyable HSL/CMYK and a before/after preview.
 ## Как запустить / How to run
 
-1. Скачайте `AutoClicker.exe` из раздела **Releases** (или соберите сами, см. ниже).
+1. Скачайте `AutoClicker.exe` из [последнего релиза](https://github.com/AlexMDLL/AutoClicker/releases/latest) (или соберите сами, см. ниже).
 2. Запустите. Если SmartScreen предупреждает — «Подробнее» → «Выполнить в любом случае»
    (приложение без цифровой подписи). / If SmartScreen warns: More info → Run anyway.
 3. Настройте и нажмите **Старт**. / Configure and press Start.
