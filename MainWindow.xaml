@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:AutoClicker"
         Title="AutoClicker Pro"
-        Height="790" Width="1080" MinHeight="700" MinWidth="980"
-        WindowStyle="None" AllowsTransparency="True" Background="Transparent" WindowStartupLocation="CenterScreen"
+        Height="790" Width="1080" MinHeight="620" MinWidth="900"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         FontFamily="{StaticResource UiFont}" UseLayoutRounding="True" SnapsToDevicePixels="True"
         TextOptions.TextFormattingMode="Display"
         PreviewKeyDown="Window_PreviewKeyDown">
@@ -16,15 +16,12 @@
     <Grid x:Name="RootLayout" Background="#01000000">
 
         <!-- ОСНОВНОЕ ОКНО -->
-        <Border x:Name="WindowBorder" Margin="10" CornerRadius="16" BorderThickness="0"
+        <Border x:Name="WindowBorder" Margin="0" CornerRadius="14" BorderThickness="0"
                 Background="{DynamicResource WindowBgGradientBrush}"
                 RenderTransformOrigin="0.5,0.5">
             <Border.RenderTransform>
                 <ScaleTransform x:Name="WindowScale" ScaleX="1" ScaleY="1"/>
             </Border.RenderTransform>
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="34" ShadowDepth="0" Opacity="0.5" Color="Black"/>
-            </Border.Effect>
 
             <Grid>
                 <Grid.RowDefinitions>
@@ -769,22 +766,30 @@
             </Border>
         </Grid>
 
-        <!-- РУЧКИ ИЗМЕНЕНИЯ РАЗМЕРА -->
-        <Thumb x:Name="GripLeft" Width="8" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="6,18,0,18"
-               Cursor="SizeWE" Background="Transparent" DragDelta="GripLeft_DragDelta"/>
-        <Thumb x:Name="GripRight" Width="8" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,18,6,18"
-               Cursor="SizeWE" Background="Transparent" DragDelta="GripRight_DragDelta"/>
-        <Thumb x:Name="GripTop" Height="8" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="18,6,18,0"
-               Cursor="SizeNS" Background="Transparent" DragDelta="GripTop_DragDelta"/>
-        <Thumb x:Name="GripBottom" Height="8" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Margin="18,0,18,6"
-               Cursor="SizeNS" Background="Transparent" DragDelta="GripBottom_DragDelta"/>
+        <!-- РУЧКИ ИЗМЕНЕНИЯ РАЗМЕРА (нативная рамка отключена) -->
+        <Thumb x:Name="GripLeft" Width="8" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="4,18,0,18"
+               Cursor="SizeWE" Style="{StaticResource ResizeGrip}" Tag="Left"
+               DragStarted="Grip_DragStarted" DragDelta="Grip_DragDelta" DragCompleted="Grip_DragCompleted"/>
+        <Thumb x:Name="GripRight" Width="8" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,18,4,18"
+               Cursor="SizeWE" Style="{StaticResource ResizeGrip}" Tag="Right"
+               DragStarted="Grip_DragStarted" DragDelta="Grip_DragDelta" DragCompleted="Grip_DragCompleted"/>
+        <Thumb x:Name="GripTop" Height="8" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="18,4,18,0"
+               Cursor="SizeNS" Style="{StaticResource ResizeGrip}" Tag="Top"
+               DragStarted="Grip_DragStarted" DragDelta="Grip_DragDelta" DragCompleted="Grip_DragCompleted"/>
+        <Thumb x:Name="GripBottom" Height="8" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Margin="18,0,18,4"
+               Cursor="SizeNS" Style="{StaticResource ResizeGrip}" Tag="Bottom"
+               DragStarted="Grip_DragStarted" DragDelta="Grip_DragDelta" DragCompleted="Grip_DragCompleted"/>
         <Thumb x:Name="GripTopLeft" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Top"
-               Cursor="SizeNWSE" Background="Transparent" DragDelta="GripTopLeft_DragDelta"/>
+               Cursor="SizeNWSE" Style="{StaticResource ResizeGrip}" Tag="TopLeft"
+               DragStarted="Grip_DragStarted" DragDelta="Grip_DragDelta" DragCompleted="Grip_DragCompleted"/>
         <Thumb x:Name="GripTopRight" Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Top"
-               Cursor="SizeNESW" Background="Transparent" DragDelta="GripTopRight_DragDelta"/>
+               Cursor="SizeNESW" Style="{StaticResource ResizeGrip}" Tag="TopRight"
+               DragStarted="Grip_DragStarted" DragDelta="Grip_DragDelta" DragCompleted="Grip_DragCompleted"/>
         <Thumb x:Name="GripBottomLeft" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-               Cursor="SizeNESW" Background="Transparent" DragDelta="GripBottomLeft_DragDelta"/>
+               Cursor="SizeNESW" Style="{StaticResource ResizeGrip}" Tag="BottomLeft"
+               DragStarted="Grip_DragStarted" DragDelta="Grip_DragDelta" DragCompleted="Grip_DragCompleted"/>
         <Thumb x:Name="GripBottomRight" Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-               Cursor="SizeNWSE" Background="Transparent" DragDelta="GripBottomRight_DragDelta"/>
+               Cursor="SizeNWSE" Style="{StaticResource ResizeGrip}" Tag="BottomRight"
+               DragStarted="Grip_DragStarted" DragDelta="Grip_DragDelta" DragCompleted="Grip_DragCompleted"/>
     </Grid>
 </Window>

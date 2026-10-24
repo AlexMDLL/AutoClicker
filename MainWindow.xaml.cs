@@ -381,18 +381,9 @@ namespace AutoClicker
             Height = _restoreBounds.Height;
 
             _isMaximized = false;
-            WindowBorder.Margin = new Thickness(10);
-            WindowBorder.CornerRadius = new CornerRadius(16);
-            if (WindowBorder.Effect == null)
-            {
-                WindowBorder.Effect = new System.Windows.Media.Effects.DropShadowEffect
-                {
-                    BlurRadius = 34,
-                    ShadowDepth = 0,
-                    Opacity = 0.5,
-                    Color = Colors.Black
-                };
-            }
+            WindowBorder.Margin = new Thickness(0);
+            WindowBorder.CornerRadius = new CornerRadius(14);
+            WindowBorder.Effect = null;
             UpdateGripVisibility();
         }
 
@@ -409,49 +400,85 @@ namespace AutoClicker
             GripBottomRight.Visibility = visibility;
         }
 
-        private void GripLeft_DragDelta(object sender, DragDeltaEventArgs e) => ResizeHorizontal(e.HorizontalChange, true);
-        private void GripRight_DragDelta(object sender, DragDeltaEventArgs e) => ResizeHorizontal(-e.HorizontalChange, false);
-        private void GripTop_DragDelta(object sender, DragDeltaEventArgs e) => ResizeVertical(e.VerticalChange, true);
-        private void GripBottom_DragDelta(object sender, DragDeltaEventArgs e) => ResizeVertical(-e.VerticalChange, false);
+        // ===================== ИЗМЕНЕНИЕ РАЗМЕРА =====================
 
-        private void ResizeHorizontal(double delta, bool moveLeft)
+        [Flags]
+        private enum ResizeEdges
+        {
+            None = 0,
+            Left = 1,
+            Top = 2,
+            Right = 4,
+            Bottom = 8
+        }
+
+        private ResizeEdges _resizeEdges = ResizeEdges.None;
+        private Rect _resizeStartRect;
+        private NativeMethods.POINT _resizeStartCursor;
+        private double _resizeDpiX = 1.0;
+        private double _resizeDpiY = 1.0;
+
+        private void Grip_DragStarted(object sender, DragStartedEventArgs e)
         {
             if (_isMaximized) return;
-            double newWidth = Math.Max(MinWidth, Width + delta);
-            if (moveLeft) Left += Width - newWidth;
-            Width = newWidth;
+
+            _resizeEdges = ParseEdges((sender as Thumb)?.Tag as string);
+            if (_resizeEdges == ResizeEdges.None) return;
+
+            _resizeStartRect = new Rect(Left, Top, Width, Height);
+            NativeMethods.GetCursorPos(out _resizeStartCursor);
+
+            var dpi = VisualTreeHelper.GetDpi(this);
+            _resizeDpiX = dpi.DpiScaleX <= 0 ? 1.0 : dpi.DpiScaleX;
+            _resizeDpiY = dpi.DpiScaleY <= 0 ? 1.0 : dpi.DpiScaleY;
         }
 
-        private void ResizeVertical(double delta, bool moveTop)
+        private void Grip_DragDelta(object sender, DragDeltaEventArgs e)
         {
-            if (_isMaximized) return;
-            double newHeight = Math.Max(MinHeight, Height + delta);
-            if (moveTop) Top += Height - newHeight;
-            Height = newHeight;
+            if (_isMaximized || _resizeEdges == ResizeEdges.None) return;
+            if (!NativeMethods.GetCursorPos(out var cursor)) return;
+
+            // Считаем от абсолютной позиции курсора: ручка двигается вместе с окном,
+            // поэтому относительные DragDelta дают «разгон» и окно улетает.
+            double dx = (cursor.X - _resizeStartCursor.X) / _resizeDpiX;
+            double dy = (cursor.Y - _resizeStartCursor.Y) / _resizeDpiY;
+
+            var start = _resizeStartRect;
+            double left = start.Left;
+            double top = start.Top;
+            double right = start.Right;
+            double bottom = start.Bottom;
+
+            if ((_resizeEdges & ResizeEdges.Left) != 0) left = Math.Min(start.Left + dx, right - MinWidth);
+            if ((_resizeEdges & ResizeEdges.Right) != 0) right = Math.Max(start.Right + dx, left + MinWidth);
+            if ((_resizeEdges & ResizeEdges.Top) != 0) top = Math.Min(start.Top + dy, bottom - MinHeight);
+            if ((_resizeEdges & ResizeEdges.Bottom) != 0) bottom = Math.Max(start.Bottom + dy, top + MinHeight);
+
+            Left = left;
+            Top = top;
+            Width = Math.Max(MinWidth, right - left);
+            Height = Math.Max(MinHeight, bottom - top);
         }
 
-        private void GripTopLeft_DragDelta(object sender, DragDeltaEventArgs e)
+        private void Grip_DragCompleted(object sender, DragCompletedEventArgs e)
         {
-            ResizeHorizontal(e.HorizontalChange, true);
-            ResizeVertical(e.VerticalChange, true);
+            _resizeEdges = ResizeEdges.None;
         }
 
-        private void GripTopRight_DragDelta(object sender, DragDeltaEventArgs e)
+        private static ResizeEdges ParseEdges(string tag)
         {
-            ResizeHorizontal(-e.HorizontalChange, false);
-            ResizeVertical(e.VerticalChange, true);
-        }
-
-        private void GripBottomLeft_DragDelta(object sender, DragDeltaEventArgs e)
-        {
-            ResizeHorizontal(e.HorizontalChange, true);
-            ResizeVertical(-e.VerticalChange, false);
-        }
-
-        private void GripBottomRight_DragDelta(object sender, DragDeltaEventArgs e)
-        {
-            ResizeHorizontal(-e.HorizontalChange, false);
-            ResizeVertical(-e.VerticalChange, false);
+            switch (tag)
+            {
+                case "Left": return ResizeEdges.Left;
+                case "Right": return ResizeEdges.Right;
+                case "Top": return ResizeEdges.Top;
+                case "Bottom": return ResizeEdges.Bottom;
+                case "TopLeft": return ResizeEdges.Left | ResizeEdges.Top;
+                case "TopRight": return ResizeEdges.Right | ResizeEdges.Top;
+                case "BottomLeft": return ResizeEdges.Left | ResizeEdges.Bottom;
+                case "BottomRight": return ResizeEdges.Right | ResizeEdges.Bottom;
+                default: return ResizeEdges.None;
+            }
         }
 
         // ===================== ВЫБОР ЗОНЫ И ТОЧКИ =====================
