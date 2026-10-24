@@ -58,6 +58,7 @@ namespace AutoClicker
         public bool IsCustomTheme { get; set; }
         public bool IsTopmost { get; set; }
         public double WindowOpacity { get; set; } = 1.0;
+        public string UiLayout { get; set; } = "Classic";
         public bool MinimizeToTray { get; set; }
         public bool SmoothScrolling { get; set; } = true;
 

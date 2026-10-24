@@ -128,6 +128,11 @@ namespace AutoClicker
                     ["BtnPick"] = "Выбрать",
 
                     ["SectionInterface"] = "Интерфейс",
+                    ["LabelLayout"] = "Макет",
+                    ["LayoutClassic"] = "Классика",
+                    ["LayoutCompact"] = "Компакт",
+                    ["LayoutMinimal"] = "Минимал",
+                    ["IntervalTurbo"] = "Турбо",
                     ["LabelOpacity"] = "Прозрачность",
                     ["CheckTopmost"] = "Поверх всех окон",
                     ["CheckTray"] = "Сворачивать в трей",
@@ -307,6 +312,11 @@ namespace AutoClicker
                     ["BtnPick"] = "Pick",
 
                     ["SectionInterface"] = "Interface",
+                    ["LabelLayout"] = "Layout",
+                    ["LayoutClassic"] = "Classic",
+                    ["LayoutCompact"] = "Compact",
+                    ["LayoutMinimal"] = "Minimal",
+                    ["IntervalTurbo"] = "Turbo",
                     ["LabelOpacity"] = "Opacity",
                     ["CheckTopmost"] = "Always on top",
                     ["CheckTray"] = "Minimize to tray",

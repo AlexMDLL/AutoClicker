@@ -84,7 +84,23 @@
                 </Grid>
 
                 <!-- ===================== ВКЛАДКИ ===================== -->
-                <TabControl x:Name="MainTabs" Grid.Row="1" TabStripPlacement="Left" SelectionChanged="MainTabs_SelectionChanged">
+                <TabControl x:Name="MainTabs" Grid.Row="1" SelectionChanged="MainTabs_SelectionChanged">
+                    <TabControl.Style>
+                        <Style TargetType="TabControl" BasedOn="{StaticResource {x:Type TabControl}}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding UiLayout}" Value="Compact">
+                                    <Setter Property="Template" Value="{StaticResource TabsCompact}"/>
+                                    <Setter Property="ItemContainerStyle" Value="{StaticResource NavItemCompact}"/>
+                                    <Setter Property="TabStripPlacement" Value="Left"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding UiLayout}" Value="Minimal">
+                                    <Setter Property="Template" Value="{StaticResource TabsMinimal}"/>
+                                    <Setter Property="ItemContainerStyle" Value="{StaticResource NavItemMinimal}"/>
+                                    <Setter Property="TabStripPlacement" Value="Top"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TabControl.Style>
 
                     <!-- ========== КЛИКЕР ========== -->
                     <TabItem Header="{Binding [TabClicker]}" Tag="🖱">
@@ -548,6 +564,22 @@
                                 <Border Style="{StaticResource Card}">
                                     <StackPanel>
                                         <TextBlock Text="{Binding [SectionInterface]}" Style="{StaticResource CardTitle}" Margin="0,0,0,12"/>
+                                        <TextBlock Text="{Binding [LabelLayout]}" Style="{StaticResource FieldLabel}" Margin="0,0,0,8"/>
+                                        <ItemsControl ItemsSource="{Binding LayoutOptions}" Margin="0,0,0,12">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <RadioButton Style="{StaticResource OptionChip}" Content="{Binding Label}"
+                                                                 IsChecked="{Binding IsSelected, Mode=TwoWay}" GroupName="LayoutGroup"
+                                                                 Command="{Binding DataContext.SelectLayoutCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                 CommandParameter="{Binding}"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
                                         <Grid Margin="0,0,0,10">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>

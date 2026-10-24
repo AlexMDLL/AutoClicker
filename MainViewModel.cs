@@ -41,6 +41,7 @@ namespace AutoClicker
         }
 
         public ObservableCollection<SelectableItem> LanguageOptions { get; } = new ObservableCollection<SelectableItem>();
+        public ObservableCollection<SelectableItem> LayoutOptions { get; } = new ObservableCollection<SelectableItem>();
         public ObservableCollection<SelectableItem> MouseButtonOptions { get; } = new ObservableCollection<SelectableItem>();
         public ObservableCollection<SelectableItem> ModeOptions { get; } = new ObservableCollection<SelectableItem>();
         public ObservableCollection<SelectableItem> IntervalPresets { get; } = new ObservableCollection<SelectableItem>();
@@ -65,6 +66,9 @@ namespace AutoClicker
         {
             get
             {
+                if (IntervalHours == 0 && IntervalMinutes == 0 && IntervalSeconds == 0 && IntervalMs == 0)
+                    return T("IntervalTurbo");
+
                 var parts = new List<string>();
                 if (IntervalHours > 0) parts.Add($"{IntervalHours} {T("UnitHours")}");
                 if (IntervalMinutes > 0) parts.Add($"{IntervalMinutes} {T("UnitMinutes")}");
@@ -236,6 +240,18 @@ namespace AutoClicker
         public bool IsListeningForHotkey { get => _isListeningForHotkey; set => SetField(ref _isListeningForHotkey, value); }
 
         // === ИНТЕРФЕЙС ===
+        private string _uiLayout = "Classic";
+        public string UiLayout
+        {
+            get => _uiLayout;
+            set
+            {
+                if (!SetField(ref _uiLayout, value)) return;
+                SyncOptionSelection(LayoutOptions, value);
+                MarkDirty();
+            }
+        }
+
         private bool _isTopmost;
         public bool IsTopmost { get => _isTopmost; set { if (SetField(ref _isTopmost, value)) MarkDirty(); } }
 
@@ -440,6 +456,7 @@ namespace AutoClicker
         public RelayCommand<SelectableItem> SelectMouseButtonCommand { get; }
         public RelayCommand<SelectableItem> SelectModeCommand { get; }
         public RelayCommand<SelectableItem> SelectLanguageCommand { get; }
+        public RelayCommand<SelectableItem> SelectLayoutCommand { get; }
         public RelayCommand<ThemePreset> SelectThemeCommand { get; }
         public RelayCommand<string> PickColorCommand { get; }
 
@@ -472,6 +489,7 @@ namespace AutoClicker
             SelectMouseButtonCommand = new RelayCommand<SelectableItem>(SelectMouseButton);
             SelectModeCommand = new RelayCommand<SelectableItem>(SelectMode);
             SelectLanguageCommand = new RelayCommand<SelectableItem>(SelectLanguage);
+            SelectLayoutCommand = new RelayCommand<SelectableItem>(SelectLayout);
             SelectThemeCommand = new RelayCommand<ThemePreset>(SelectTheme);
             PickColorCommand = new RelayCommand<string>(PickColor);
 
@@ -487,6 +505,7 @@ namespace AutoClicker
             BuildMouseButtons();
             BuildModes();
             BuildLanguages();
+            BuildLayouts();
 
             _statsTimer = new DispatcherTimer(DispatcherPriority.Background)
             {
@@ -528,6 +547,8 @@ namespace AutoClicker
         private void BuildIntervalPresets()
         {
             IntervalPresets.Clear();
+            IntervalPresets.Add(new SelectableItem { Label = T("IntervalTurbo"), Tag = 0 });
+
             foreach (int ms in new[] { 1, 10, 50, 100, 250, 500, 1000 })
             {
                 string label = ms >= 1000 ? $"1 {T("UnitSeconds")}" : $"{ms} {T("UnitMs")}";
@@ -577,6 +598,20 @@ namespace AutoClicker
             SyncOptionSelection(LanguageOptions, CurrentLanguage);
         }
 
+
+        private void BuildLayouts()
+        {
+            LayoutOptions.Clear();
+            LayoutOptions.Add(new SelectableItem { Label = T("LayoutClassic"), Description = "214 px sidebar", Tag = "Classic" });
+            LayoutOptions.Add(new SelectableItem { Label = T("LayoutCompact"), Description = "64 px icon rail", Tag = "Compact" });
+            LayoutOptions.Add(new SelectableItem { Label = T("LayoutMinimal"), Description = "top navigation", Tag = "Minimal" });
+            SyncOptionSelection(LayoutOptions, UiLayout);
+        }
+
+        private void SelectLayout(SelectableItem item)
+        {
+            if (item?.Tag is string layout) UiLayout = layout;
+        }
         private void RebuildLocalizedLabels()
         {
             CustomThemePreset.DisplayName = T("ThemeCustom");
@@ -584,6 +619,7 @@ namespace AutoClicker
             BuildMouseButtons();
             BuildModes();
             BuildLanguages();
+            BuildLayouts();
             OnPropertyChanged(nameof(WindowText));
             OnPropertyChanged(nameof(ZoneText));
             OnPropertyChanged(nameof(IntervalText));
@@ -1063,6 +1099,7 @@ namespace AutoClicker
                 _windowOpacity = Math.Max(0.4, Math.Min(1.0, s.WindowOpacity));
                 MinimizeToTray = s.MinimizeToTray;
                 SmoothScrolling = s.SmoothScrolling;
+                UiLayout = string.IsNullOrWhiteSpace(s.UiLayout) ? "Classic" : s.UiLayout;
 
                 UseCustomBackground = s.UseCustomBackground;
                 UseCustomForeground = s.UseCustomForeground;
@@ -1176,6 +1213,7 @@ namespace AutoClicker
                 WindowOpacity = WindowOpacity,
                 MinimizeToTray = MinimizeToTray,
                 SmoothScrolling = SmoothScrolling,
+                UiLayout = UiLayout,
                 CustomBackground = ToHex(CustomBackgroundBrush),
                 CustomForeground = ToHex(CustomForegroundBrush),
                 CustomBorder = ToHex(CustomBorderBrush),

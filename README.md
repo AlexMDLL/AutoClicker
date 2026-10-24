@@ -28,7 +28,27 @@ high-precision timing and clear stats.
 - **Мелочи:** сворачивание в трей, «поверх всех окон», прозрачность, плавная прокрутка,
   автосохранение настроек. / Tray, always-on-top, opacity, smooth scrolling, auto-save.
 - **Один exe:** зависимости вшиваются через Costura.Fody. / Single exe via Costura.Fody.
+- **Три раскладки интерфейса:** классика (сайдбар), компакт (рейл иконок), минимал (верхнее меню).
+  / Three UI layouts: classic sidebar, compact icon rail, minimal top nav.
+- **Турбо-режим:** интервал 0 мс — до ~15 000 кликов/с в фоновом режиме.
+  / Turbo mode (0 ms) — up to ~15k clicks/s in background mode.
 
+### Раскладки / Layouts
+
+Переключаются в **Настройки → Интерфейс → Макет** и запоминаются.
+/ Switch in **Settings → Interface → Layout**; the choice is saved.
+
+| Компакт / Compact | Минимал / Minimal |
+|---|---|
+| ![Compact](docs/layout-compact.png) | ![Minimal](docs/layout-minimal.png) |
+
+### Производительность / Performance
+
+- Кликер живёт в отдельном потоке с точным таймером (`timeBeginPeriod` + `Stopwatch` + SpinWait).
+- Ноль аллокаций на клик: переиспользуемые буферы `SendInput`, кэш метрик экрана и флагов кнопки.
+- CPS считается через lock-free кольцо, без блокировок в горячем пути.
+- Турбо (0 мс): ~15 000 кликов/с в фоновом режиме на тестовом стенде.
+- UI обновляет статистику 5 раз в секунду, а не каждый клик.
 ### Выбор цвета / Color picker
 
 ![Color picker](docs/color-picker.png)

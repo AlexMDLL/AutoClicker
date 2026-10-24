@@ -1,28 +1,44 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace AutoClicker
 {
     /// <summary>
     /// Движок кликера. Работает в отдельном потоке с точным таймером
-    /// (timeBeginPeriod + Stopwatch + гибрид Sleep/SpinWait), поэтому интервалы
-    /// не «плывут» на 15 мс, как у Task.Delay, и UI не подвисает.
+    /// (timeBeginPeriod + Stopwatch + гибрид Sleep/SpinWait).
+    /// Горячий путь оптимизирован: переиспользуемые буферы SendInput,
+    /// кэш метрик экрана/флагов кнопки и lock-free кольцо для CPS.
     /// </summary>
     public sealed class ClickerEngine
     {
+        private static readonly int InputSize = Marshal.SizeOf(typeof(NativeMethods.INPUT));
+
+        private readonly NativeMethods.INPUT[] _inputs = new NativeMethods.INPUT[3];
+        private readonly Random _rng = new Random();
+
         private Thread _thread;
         private volatile bool _stopRequested;
         private volatile bool _running;
         private long _clicks;
         private long _startTicks;
 
-        private readonly Random _rng = new Random();
-        private readonly object _cpsLock = new object();
-        private readonly Queue<long> _recentClicks = new Queue<long>();
+        // Lock-free кольцо отметок кликов для подсчёта CPS
+        private readonly long[] _clickStamps = new long[512];
+        private int _clickStampPos;
+
+        // Кэш метрик виртуального экрана
+        private int _virtualX, _virtualY, _virtualWidth, _virtualHeight;
+        private long _metricsStamp;
+
+        // Кэш кнопки и её сообщений
+        private MouseButtonKind _button = MouseButtonKind.Left;
+        private uint _downFlag, _upFlag;
+        private int _downMessage, _upMessage, _mouseWParam;
 
         private DateTime _lastActivation = DateTime.MinValue;
+        private int _turboYieldCounter;
 
         public event Action Started;
         public event Action<string> Stopped; // null — остановили вручную
@@ -31,7 +47,18 @@ namespace AutoClicker
         public int IntervalMs { get; set; } = 100;
         public bool UseCustomInterval { get; set; }
         public double CustomInterval { get; set; }
-        public MouseButtonKind Button { get; set; } = MouseButtonKind.Left;
+
+        public MouseButtonKind Button
+        {
+            get => _button;
+            set
+            {
+                if (_button == value) return;
+                _button = value;
+                UpdateButtonCache();
+            }
+        }
+
         public ClickMode Mode { get; set; } = ClickMode.Foreground;
 
         public int ZoneX { get; set; }
@@ -68,8 +95,9 @@ namespace AutoClicker
         {
             get
             {
-                if (_startTicks == 0) return TimeSpan.Zero;
-                long delta = Stopwatch.GetTimestamp() - _startTicks;
+                long start = _startTicks;
+                if (start == 0) return TimeSpan.Zero;
+                long delta = Stopwatch.GetTimestamp() - start;
                 return TimeSpan.FromSeconds(delta / (double)Stopwatch.Frequency);
             }
         }
@@ -78,11 +106,51 @@ namespace AutoClicker
         {
             get
             {
-                lock (_cpsLock)
+                long now = Stopwatch.GetTimestamp();
+                long cutoff = now - Stopwatch.Frequency;
+                int position = Volatile.Read(ref _clickStampPos);
+                int count = 0;
+
+                for (int i = 1; i <= _clickStamps.Length; i++)
                 {
-                    TrimCpsQueue();
-                    return _recentClicks.Count;
+                    long stamp = Volatile.Read(ref _clickStamps[(position - i) & 511]);
+                    if (stamp < cutoff) break;
+                    count++;
                 }
+                return count;
+            }
+        }
+
+        public ClickerEngine()
+        {
+            UpdateButtonCache();
+        }
+
+        private void UpdateButtonCache()
+        {
+            switch (_button)
+            {
+                case MouseButtonKind.Right:
+                    _downFlag = NativeMethods.MOUSEEVENTF_RIGHTDOWN;
+                    _upFlag = NativeMethods.MOUSEEVENTF_RIGHTUP;
+                    _downMessage = NativeMethods.WM_RBUTTONDOWN;
+                    _upMessage = NativeMethods.WM_RBUTTONUP;
+                    _mouseWParam = NativeMethods.MK_RBUTTON;
+                    break;
+                case MouseButtonKind.Middle:
+                    _downFlag = NativeMethods.MOUSEEVENTF_MIDDLEDOWN;
+                    _upFlag = NativeMethods.MOUSEEVENTF_MIDDLEUP;
+                    _downMessage = NativeMethods.WM_MBUTTONDOWN;
+                    _upMessage = NativeMethods.WM_MBUTTONUP;
+                    _mouseWParam = NativeMethods.MK_MBUTTON;
+                    break;
+                default:
+                    _downFlag = NativeMethods.MOUSEEVENTF_LEFTDOWN;
+                    _upFlag = NativeMethods.MOUSEEVENTF_LEFTUP;
+                    _downMessage = NativeMethods.WM_LBUTTONDOWN;
+                    _upMessage = NativeMethods.WM_LBUTTONUP;
+                    _mouseWParam = NativeMethods.MK_LBUTTON;
+                    break;
             }
         }
 
@@ -92,10 +160,12 @@ namespace AutoClicker
 
             _stopRequested = false;
             Interlocked.Exchange(ref _clicks, 0);
-            lock (_cpsLock) _recentClicks.Clear();
+            Interlocked.Exchange(ref _clickStampPos, 0);
+            Array.Clear(_clickStamps, 0, _clickStamps.Length);
             _startTicks = Stopwatch.GetTimestamp();
             _running = true;
             _lastActivation = DateTime.MinValue;
+            _turboYieldCounter = 0;
 
             _thread = new Thread(Run)
             {
@@ -113,10 +183,7 @@ namespace AutoClicker
             _stopRequested = true;
             var thread = _thread;
             if (thread != null && thread.IsAlive && thread != Thread.CurrentThread)
-            {
-                // Поток просыпается минимум раз в пару миллисекунд, ждём недолго.
                 thread.Join(250);
-            }
         }
 
         /// <summary>Одиночный клик (кнопка «Тестовый клик»).</summary>
@@ -151,8 +218,7 @@ namespace AutoClicker
 
                     if (EnableCyclicMode)
                     {
-                        double burst = Math.Max(0.05, ClickDuration);
-                        var burstEnd = sw.Elapsed + TimeSpan.FromSeconds(burst);
+                        var burstEnd = sw.Elapsed + TimeSpan.FromSeconds(Math.Max(0.05, ClickDuration));
 
                         while (!_stopRequested && sw.Elapsed < burstEnd)
                         {
@@ -196,12 +262,19 @@ namespace AutoClicker
         {
             double ms = IntervalMs;
             if (UseCustomInterval) ms += CustomInterval * 1000.0;
-            return Math.Max(1.0, ms);
+            return Math.Max(0.0, ms); // 0 = турбо, без паузы
         }
 
         /// <summary>Ждёт следующего клика, компенсируя накопленное отставание.</summary>
         private bool WaitInterval(Stopwatch sw, ref long nextTick, double intervalMs, ref bool first)
         {
+            if (intervalMs <= 0.0)
+            {
+                // Турбо: не спим вообще, но изредка отдаём квант, чтобы не душить систему
+                if ((++_turboYieldCounter & 127) == 0) Thread.Sleep(0);
+                return !_stopRequested;
+            }
+
             double jitter = 1.0;
             if (EnableHumanization && HumanizePercent > 0)
             {
@@ -209,7 +282,7 @@ namespace AutoClicker
                 jitter = 1.0 + (_rng.NextDouble() * 2.0 - 1.0) * max;
             }
 
-            double actual = Math.Max(0.5, intervalMs * jitter);
+            double actual = Math.Max(0.2, intervalMs * jitter);
             long step = (long)(actual * Stopwatch.Frequency / 1000.0);
 
             if (first) { nextTick = sw.ElapsedTicks + step; first = false; }
@@ -243,14 +316,11 @@ namespace AutoClicker
         {
             if (!TryResolvePoint(out int x, out int y)) return;
 
-            if (Mode == ClickMode.Background && TargetWindow != IntPtr.Zero)
+            if (Mode == ClickMode.Background && TargetWindow != IntPtr.Zero && IsTargetValid())
             {
-                if (IsTargetValid())
-                {
-                    ClickBackground(x, y);
-                    RegisterClick();
-                    return;
-                }
+                ClickBackground(x, y);
+                RegisterClick();
+                return;
             }
 
             ClickForeground(x, y);
@@ -307,25 +377,45 @@ namespace AutoClicker
 
         private void ClickForeground(int screenX, int screenY)
         {
-            GetButtonFlags(out uint down, out uint up);
+            ToAbsolute(screenX, screenY, out int ax, out int ay);
 
             NativeMethods.POINT original = default;
-            bool restore = ReturnCursor && NativeMethods.GetCursorPos(out original);
+            bool restoreCursor = ReturnCursor && NativeMethods.GetCursorPos(out original);
 
-            int hold = Math.Max(0, ClickHoldMs);
-            if (hold == 0)
+            if (ClickHoldMs > 0)
             {
-                NativeMethods.SendMouseClick(screenX, screenY, down, up);
+                _inputs[0] = MakeInput(ax, ay, NativeMethods.MOUSEEVENTF_MOVE | NativeMethods.MOUSEEVENTF_ABSOLUTE | NativeMethods.MOUSEEVENTF_VIRTUALDESK);
+                _inputs[1] = MakeInput(ax, ay, _downFlag | NativeMethods.MOUSEEVENTF_ABSOLUTE | NativeMethods.MOUSEEVENTF_VIRTUALDESK);
+                NativeMethods.SendInput(2, _inputs, InputSize);
+
+                PreciseDelay(ClickHoldMs);
+
+                _inputs[0] = MakeInput(ax, ay, _upFlag | NativeMethods.MOUSEEVENTF_ABSOLUTE | NativeMethods.MOUSEEVENTF_VIRTUALDESK);
+                NativeMethods.SendInput(1, _inputs, InputSize);
             }
             else
             {
-                // В играх важно, чтобы кнопка была реально зажата какое-то время.
-                NativeMethods.SendMouseDown(screenX, screenY, down);
-                PreciseDelay(hold);
-                NativeMethods.SendMouseUp(screenX, screenY, up);
+                _inputs[0] = MakeInput(ax, ay, NativeMethods.MOUSEEVENTF_MOVE | NativeMethods.MOUSEEVENTF_ABSOLUTE | NativeMethods.MOUSEEVENTF_VIRTUALDESK);
+                _inputs[1] = MakeInput(ax, ay, _downFlag | NativeMethods.MOUSEEVENTF_ABSOLUTE | NativeMethods.MOUSEEVENTF_VIRTUALDESK);
+                _inputs[2] = MakeInput(ax, ay, _upFlag | NativeMethods.MOUSEEVENTF_ABSOLUTE | NativeMethods.MOUSEEVENTF_VIRTUALDESK);
+                NativeMethods.SendInput(3, _inputs, InputSize);
             }
 
-            if (restore) NativeMethods.SetCursorPos(original.X, original.Y);
+            if (restoreCursor) NativeMethods.SetCursorPos(original.X, original.Y);
+        }
+
+        private static NativeMethods.INPUT MakeInput(int ax, int ay, uint flags)
+        {
+            return new NativeMethods.INPUT
+            {
+                type = NativeMethods.INPUT_MOUSE,
+                mi = new NativeMethods.MOUSEINPUT
+                {
+                    dx = ax,
+                    dy = ay,
+                    dwFlags = flags
+                }
+            };
         }
 
         private void ClickBackground(int screenX, int screenY)
@@ -334,58 +424,13 @@ namespace AutoClicker
             if (!NativeMethods.ScreenToClient(TargetWindow, ref client)) return;
 
             IntPtr lParam = NativeMethods.MakeLParam(client.X, client.Y);
-            int down, up, mk;
-            GetButtonMessages(out down, out up, out mk);
 
-            // Двигаем «виртуальный» курсор внутри окна, затем кликаем.
             NativeMethods.PostMessage(TargetWindow, NativeMethods.WM_MOUSEMOVE, IntPtr.Zero, lParam);
-            NativeMethods.PostMessage(TargetWindow, down, (IntPtr)mk, lParam);
+            NativeMethods.PostMessage(TargetWindow, _downMessage, (IntPtr)_mouseWParam, lParam);
 
-            int hold = Math.Max(0, ClickHoldMs);
-            if (hold > 0) PreciseDelay(hold);
+            if (ClickHoldMs > 0) PreciseDelay(ClickHoldMs);
 
-            NativeMethods.PostMessage(TargetWindow, up, IntPtr.Zero, lParam);
-        }
-
-        private void GetButtonFlags(out uint down, out uint up)
-        {
-            switch (Button)
-            {
-                case MouseButtonKind.Right:
-                    down = NativeMethods.MOUSEEVENTF_RIGHTDOWN;
-                    up = NativeMethods.MOUSEEVENTF_RIGHTUP;
-                    break;
-                case MouseButtonKind.Middle:
-                    down = NativeMethods.MOUSEEVENTF_MIDDLEDOWN;
-                    up = NativeMethods.MOUSEEVENTF_MIDDLEUP;
-                    break;
-                default:
-                    down = NativeMethods.MOUSEEVENTF_LEFTDOWN;
-                    up = NativeMethods.MOUSEEVENTF_LEFTUP;
-                    break;
-            }
-        }
-
-        private void GetButtonMessages(out int down, out int up, out int mk)
-        {
-            switch (Button)
-            {
-                case MouseButtonKind.Right:
-                    down = NativeMethods.WM_RBUTTONDOWN;
-                    up = NativeMethods.WM_RBUTTONUP;
-                    mk = NativeMethods.MK_RBUTTON;
-                    break;
-                case MouseButtonKind.Middle:
-                    down = NativeMethods.WM_MBUTTONDOWN;
-                    up = NativeMethods.WM_MBUTTONUP;
-                    mk = NativeMethods.MK_MBUTTON;
-                    break;
-                default:
-                    down = NativeMethods.WM_LBUTTONDOWN;
-                    up = NativeMethods.WM_LBUTTONUP;
-                    mk = NativeMethods.MK_LBUTTON;
-                    break;
-            }
+            NativeMethods.PostMessage(TargetWindow, _upMessage, IntPtr.Zero, lParam);
         }
 
         /// <summary>Игровой режим: возвращаем окно в фокус, иначе SendInput уйдёт не туда.</summary>
@@ -425,30 +470,44 @@ namespace AutoClicker
         private void PreciseDelay(int milliseconds)
         {
             if (milliseconds <= 0) return;
-            var sw = Stopwatch.StartNew();
-            while (!_stopRequested && sw.ElapsedMilliseconds < milliseconds)
+
+            long end = Stopwatch.GetTimestamp() + milliseconds * Stopwatch.Frequency / 1000;
+            while (!_stopRequested)
             {
-                long remain = milliseconds - sw.ElapsedMilliseconds;
-                if (remain > 2) Thread.Sleep(1);
+                long remain = end - Stopwatch.GetTimestamp();
+                if (remain <= 0) return;
+
+                double ms = remain * 1000.0 / Stopwatch.Frequency;
+                if (ms > 2.0) Thread.Sleep(1);
                 else Thread.SpinWait(30);
             }
+        }
+
+        /// <summary>Абсолютные координаты с кэшем метрик экрана (обновление раз в секунду).</summary>
+        private void ToAbsolute(int screenX, int screenY, out int absX, out int absY)
+        {
+            long now = Stopwatch.GetTimestamp();
+            if (_virtualWidth <= 1 || now - _metricsStamp > Stopwatch.Frequency)
+            {
+                _virtualX = NativeMethods.GetSystemMetrics(NativeMethods.SM_XVIRTUALSCREEN);
+                _virtualY = NativeMethods.GetSystemMetrics(NativeMethods.SM_YVIRTUALSCREEN);
+                _virtualWidth = NativeMethods.GetSystemMetrics(NativeMethods.SM_CXVIRTUALSCREEN);
+                _virtualHeight = NativeMethods.GetSystemMetrics(NativeMethods.SM_CYVIRTUALSCREEN);
+                _metricsStamp = now;
+            }
+
+            int width = Math.Max(2, _virtualWidth);
+            int height = Math.Max(2, _virtualHeight);
+
+            absX = (int)Math.Round((screenX - _virtualX) * 65535.0 / (width - 1));
+            absY = (int)Math.Round((screenY - _virtualY) * 65535.0 / (height - 1));
         }
 
         private void RegisterClick()
         {
             Interlocked.Increment(ref _clicks);
-            lock (_cpsLock)
-            {
-                _recentClicks.Enqueue(Stopwatch.GetTimestamp());
-                TrimCpsQueue();
-            }
-        }
-
-        private void TrimCpsQueue()
-        {
-            long threshold = Stopwatch.GetTimestamp() - Stopwatch.Frequency;
-            while (_recentClicks.Count > 0 && _recentClicks.Peek() < threshold)
-                _recentClicks.Dequeue();
+            int position = Interlocked.Increment(ref _clickStampPos);
+            Volatile.Write(ref _clickStamps[position & 511], Stopwatch.GetTimestamp());
         }
     }
 }
