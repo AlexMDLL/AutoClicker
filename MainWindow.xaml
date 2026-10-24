@@ -1,0 +1,790 @@
+<Window x:Class="AutoClicker.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:AutoClicker"
+        Title="AutoClicker Pro"
+        Height="790" Width="1080" MinHeight="700" MinWidth="980"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" WindowStartupLocation="CenterScreen"
+        FontFamily="{StaticResource UiFont}" UseLayoutRounding="True" SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        PreviewKeyDown="Window_PreviewKeyDown">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
+
+    <Grid x:Name="RootLayout" Background="#01000000">
+
+        <!-- ОСНОВНОЕ ОКНО -->
+        <Border x:Name="WindowBorder" Margin="10" CornerRadius="16" BorderThickness="0"
+                Background="{DynamicResource WindowBgGradientBrush}"
+                RenderTransformOrigin="0.5,0.5">
+            <Border.RenderTransform>
+                <ScaleTransform x:Name="WindowScale" ScaleX="1" ScaleY="1"/>
+            </Border.RenderTransform>
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="34" ShadowDepth="0" Opacity="0.5" Color="Black"/>
+            </Border.Effect>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="54"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- ===================== ЗАГОЛОВОК ===================== -->
+                <Grid Grid.Row="0" Background="{DynamicResource TitleBarBrush}" MouseLeftButtonDown="TitleBar_MouseDown">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal" Margin="18,0,0,0" VerticalAlignment="Center">
+                        <Border Width="30" Height="30" CornerRadius="9" Background="{DynamicResource AccentGradientBrush}">
+                            <TextBlock Text="⚡" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="{StaticResource WhiteBrush}"/>
+                        </Border>
+                        <TextBlock Text="AutoClicker" FontSize="15" FontWeight="Bold" Margin="11,0,0,0" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource ForegroundBrush}"/>
+                        <Border Background="{DynamicResource AccentSoftBrush}" CornerRadius="6" Padding="6,2" Margin="9,0,0,0"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="PRO" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
+                        </Border>
+
+                        <!-- Индикатор работы -->
+                        <Border x:Name="RunBadge" Background="{DynamicResource AccentFaintBrush}" CornerRadius="8"
+                                Padding="9,4" Margin="14,0,0,0" VerticalAlignment="Center"
+                                Visibility="{Binding IsRunning, Converter={StaticResource BoolToVis}}">
+                            <StackPanel Orientation="Horizontal">
+                                <Grid Width="8" Height="8" VerticalAlignment="Center">
+                                    <Ellipse x:Name="RunDotHalo" Fill="{DynamicResource SuccessBrush}" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                                        <Ellipse.RenderTransform>
+                                            <ScaleTransform x:Name="RunDotScale" ScaleX="1" ScaleY="1"/>
+                                        </Ellipse.RenderTransform>
+                                    </Ellipse>
+                                    <Ellipse Width="8" Height="8" Fill="{DynamicResource SuccessBrush}"/>
+                                </Grid>
+                                <TextBlock Text="{Binding [BtnRunning]}" FontSize="10.5" Margin="7,0,0,0"
+                                           Foreground="{DynamicResource SuccessBrush}" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,6,0">
+                        <Button Command="{Binding SetHotkeyCommand}" Style="{StaticResource GhostButton}"
+                                Padding="10,6" Margin="0,0,8,0" ToolTip="{Binding [HintHotkey]}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⌨" FontSize="12" Margin="0,0,7,0" Foreground="{DynamicResource AccentBrush}"/>
+                                <TextBlock Text="{Binding HotkeyDisplay}" FontSize="11.5" FontFamily="{StaticResource MonoFont}"
+                                           Foreground="{DynamicResource ForegroundBrush}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Content="—" Style="{StaticResource WindowButton}" Click="Minimize_Click" ToolTip="Minimize"/>
+                        <Button Content="▢" Style="{StaticResource WindowButton}" Click="Maximize_Click" ToolTip="Maximize"/>
+                        <Button Content="✕" Style="{StaticResource CloseWindowButton}" Click="Close_Click" ToolTip="Close"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- ===================== ВКЛАДКИ ===================== -->
+                <TabControl x:Name="MainTabs" Grid.Row="1" TabStripPlacement="Left" SelectionChanged="MainTabs_SelectionChanged">
+
+                    <!-- ========== КЛИКЕР ========== -->
+                    <TabItem Header="{Binding [TabClicker]}" Tag="🖱">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0"
+                                      local:SmoothScroll.IsEnabled="{Binding SmoothScrolling}">
+                            <StackPanel>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [SectionInterval]}" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock Text="{Binding [HintInterval]}" Style="{StaticResource MutedText}" Margin="0,3,0,14"/>
+
+                                        <ItemsControl ItemsSource="{Binding IntervalPresets}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <RadioButton Style="{StaticResource OptionChip}" Content="{Binding Label}"
+                                                                 IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                 Command="{Binding DataContext.SelectIntervalCommand, RelativeSource={RelativeSource AncestorType=Window}}" GroupName="IntervalGroup"
+                                                                 CommandParameter="{Binding}"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                            <TextBox Text="{Binding IntervalHours}" Style="{StaticResource NumberBox}"/>
+                                            <TextBlock Text="{Binding [UnitHours]}" Style="{StaticResource FieldLabel}" Margin="0,0,14,0"/>
+                                            <TextBox Text="{Binding IntervalMinutes}" Style="{StaticResource NumberBox}"/>
+                                            <TextBlock Text="{Binding [UnitMinutes]}" Style="{StaticResource FieldLabel}" Margin="0,0,14,0"/>
+                                            <TextBox Text="{Binding IntervalSeconds}" Style="{StaticResource NumberBox}"/>
+                                            <TextBlock Text="{Binding [UnitSeconds]}" Style="{StaticResource FieldLabel}" Margin="0,0,14,0"/>
+                                            <TextBox Text="{Binding IntervalMs}" Style="{StaticResource NumberBox}"/>
+                                            <TextBlock Text="{Binding [UnitMs]}" Style="{StaticResource FieldLabel}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="14"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Grid.Column="0" Style="{StaticResource Card}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding [SectionMouse]}" Style="{StaticResource CardTitle}"/>
+                                            <TextBlock Text="{Binding [HintMouse]}" Style="{StaticResource MutedText}" Margin="0,3,0,10"/>
+                                            <ItemsControl ItemsSource="{Binding MouseButtonOptions}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <RadioButton Style="{StaticResource OptionChip}" Content="{Binding Label}"
+                                                                     IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                     Command="{Binding DataContext.SelectMouseButtonCommand, RelativeSource={RelativeSource AncestorType=Window}}" GroupName="MouseGroup"
+                                                                     CommandParameter="{Binding}"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Column="2" Style="{StaticResource Card}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding [SectionClick]}" Style="{StaticResource CardTitle}"/>
+                                            <TextBlock Text="{Binding [HintHold]}" Style="{StaticResource MutedText}" Margin="0,3,0,10"/>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBox Text="{Binding ClickHoldMs}" Style="{StaticResource NumberBox}"/>
+                                                <TextBlock Text="{Binding [UnitMs]}" Style="{StaticResource FieldLabel}"/>
+                                            </StackPanel>
+                                            <CheckBox Content="{Binding [CheckReturnCursor]}" IsChecked="{Binding ReturnCursor}" Margin="0,6,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+
+                                <Expander Header="{Binding [SectionAdvanced]}">
+                                    <StackPanel>
+                                        <CheckBox Content="{Binding [AdvCyclic]}" IsChecked="{Binding EnableCyclicMode}"/>
+                                        <Grid IsEnabled="{Binding EnableCyclicMode}" Margin="52,8,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding [LabelClickDur]}" Style="{StaticResource FieldLabel}"/>
+                                            <TextBox Grid.Column="1" Text="{Binding ClickDuration}" Style="{StaticResource NumberBox}" Margin="0,0,16,0"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding [LabelRestDur]}" Style="{StaticResource FieldLabel}"/>
+                                            <TextBox Grid.Column="3" Text="{Binding RestDuration}" Style="{StaticResource NumberBox}"/>
+                                        </Grid>
+
+                                        <CheckBox Content="{Binding [AdvRandom]}" IsChecked="{Binding EnableRandomization}" Margin="0,4,0,0"/>
+                                        <Grid IsEnabled="{Binding EnableRandomization}" Margin="52,8,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding [LabelRandX]}" Style="{StaticResource FieldLabel}"/>
+                                            <TextBox Grid.Column="1" Text="{Binding RandomOffsetX}" Style="{StaticResource NumberBox}" Margin="0,0,16,0"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding [LabelRandY]}" Style="{StaticResource FieldLabel}"/>
+                                            <TextBox Grid.Column="3" Text="{Binding RandomOffsetY}" Style="{StaticResource NumberBox}"/>
+                                        </Grid>
+
+                                        <CheckBox Content="{Binding [AdvHuman]}" IsChecked="{Binding EnableHumanization}" Margin="0,4,0,0"/>
+                                        <Grid IsEnabled="{Binding EnableHumanization}" Margin="52,8,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding [LabelHumanPercent]}" Style="{StaticResource FieldLabel}"/>
+                                            <TextBox Grid.Column="1" Text="{Binding HumanizePercent}" Style="{StaticResource NumberBox}"/>
+                                        </Grid>
+
+                                        <Separator/>
+
+                                        <CheckBox Content="{Binding [CheckClickLimit]}" IsChecked="{Binding EnableClickLimit}"/>
+                                        <Grid IsEnabled="{Binding EnableClickLimit}" Margin="52,8,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding [LabelMaxClicks]}" Style="{StaticResource FieldLabel}"/>
+                                            <TextBox Grid.Column="1" Text="{Binding MaxClicks}" Style="{StaticResource NumberBox}"/>
+                                        </Grid>
+
+                                        <CheckBox Content="{Binding [CheckTimeLimit]}" IsChecked="{Binding EnableTimeLimit}"/>
+                                        <Grid IsEnabled="{Binding EnableTimeLimit}" Margin="52,8,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding [LabelTimeH]}" Style="{StaticResource FieldLabel}"/>
+                                            <TextBox Grid.Column="1" Text="{Binding TimeLimitHours}" Style="{StaticResource NumberBox}" Margin="0,0,10,0"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding [LabelTimeM]}" Style="{StaticResource FieldLabel}"/>
+                                            <TextBox Grid.Column="3" Text="{Binding TimeLimitMinutes}" Style="{StaticResource NumberBox}" Margin="0,0,10,0"/>
+                                            <TextBlock Grid.Column="4" Text="{Binding [LabelTimeS]}" Style="{StaticResource FieldLabel}"/>
+                                            <TextBox Grid.Column="5" Text="{Binding TimeLimitSeconds}" Style="{StaticResource NumberBox}"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Expander>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [SectionSession]}" Style="{StaticResource CardTitle}" Margin="0,0,0,14"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding ClicksDone}" FontSize="26" FontWeight="Bold"
+                                                           FontFamily="{StaticResource MonoFont}" Foreground="{DynamicResource ForegroundBrush}"/>
+                                                <TextBlock Text="{Binding [LabelClicks]}" Style="{StaticResource MutedText}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="{Binding Cps, StringFormat={}{0:0.0}}" FontSize="26" FontWeight="Bold"
+                                                           FontFamily="{StaticResource MonoFont}" Foreground="{DynamicResource AccentBrush}"/>
+                                                <TextBlock Text="{Binding [LabelCps]}" Style="{StaticResource MutedText}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="{Binding ElapsedText}" FontSize="26" FontWeight="Bold"
+                                                           FontFamily="{StaticResource MonoFont}" Foreground="{DynamicResource ForegroundBrush}"/>
+                                                <TextBlock Text="{Binding [LabelUptime]}" Style="{StaticResource MutedText}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <Grid>
+                                            <TextBlock Text="{Binding [SectionTarget]}" Style="{StaticResource CardTitle}"/>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                <TextBlock Text="{Binding TargetSummaryText}" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
+                                                <TextBlock Text="   ·   " Style="{StaticResource MutedText}"/>
+                                                <TextBlock Text="{Binding ModeText}" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Grid>
+                                        <WrapPanel Margin="0,12,0,0">
+                                            <Button Command="{Binding SelectAreaCommand}" Style="{StaticResource GhostButton}" Margin="0,0,8,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="▣" Margin="0,0,7,0" Foreground="{DynamicResource AccentBrush}"/>
+                                                    <TextBlock Text="{Binding [BtnSelectZone]}"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Command="{Binding SelectPointCommand}" Style="{StaticResource GhostButton}" Margin="0,0,8,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="✦" Margin="0,0,7,0" Foreground="{DynamicResource AccentBrush}"/>
+                                                    <TextBlock Text="{Binding [BtnSelectPoint]}"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Command="{Binding SelectWindowCommand}" Style="{StaticResource GhostButton}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="🪟" Margin="0,0,7,0"/>
+                                                    <TextBlock Text="{Binding [BtnSelectWindow]}"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- ========== ЦЕЛЬ ========== -->
+                    <TabItem Header="{Binding [TabTarget]}" Tag="🎯">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0"
+                                      local:SmoothScroll.IsEnabled="{Binding SmoothScrolling}">
+                            <StackPanel>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [SectionTarget]}" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock Text="{Binding [HintTarget]}" Style="{StaticResource MutedText}" Margin="0,3,0,14"/>
+                                        <WrapPanel>
+                                            <Button Command="{Binding SelectAreaCommand}" Style="{StaticResource PrimaryButton}" Margin="0,0,10,8">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="▣" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="{Binding [BtnSelectZone]}"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Command="{Binding SelectPointCommand}" Style="{StaticResource GhostButton}" Margin="0,0,10,8">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="✦" Margin="0,0,8,0" Foreground="{DynamicResource AccentBrush}"/>
+                                                    <TextBlock Text="{Binding [BtnSelectPoint]}"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Command="{Binding SelectWindowCommand}" Style="{StaticResource GhostButton}" Margin="0,0,10,8">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="🪟" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="{Binding [BtnSelectWindow]}"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [SectionZoneInfo]}" Style="{StaticResource CardTitle}" Margin="0,0,0,12"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="12"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource InnerCard}" Margin="0">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding [LabelZone]}" Style="{StaticResource MutedText}"/>
+                                                    <TextBlock Text="{Binding ZoneText}" FontFamily="{StaticResource MonoFont}"
+                                                               FontSize="12.5" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"
+                                                               TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Grid.Column="2" Style="{StaticResource InnerCard}" Margin="0">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding [LabelWindow]}" Style="{StaticResource MutedText}"/>
+                                                    <TextBlock Text="{Binding WindowText}" FontSize="12.5" Margin="0,5,0,0"
+                                                               Foreground="{DynamicResource ForegroundBrush}" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [SectionMode]}" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock Text="{Binding [HintMode]}" Style="{StaticResource MutedText}" Margin="0,3,0,12"/>
+                                        <ItemsControl ItemsSource="{Binding ModeOptions}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <RadioButton Style="{StaticResource OptionCard}"
+                                                                 AutomationProperties.Name="{Binding Label}"
+                                                                 IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                 Command="{Binding DataContext.SelectModeCommand, RelativeSource={RelativeSource AncestorType=Window}}" GroupName="ModeGroup"
+                                                                 CommandParameter="{Binding}">
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding Label}" FontSize="13" FontWeight="SemiBold"
+                                                                       Foreground="{DynamicResource ForegroundBrush}"/>
+                                                            <TextBlock Text="{Binding Description}" Style="{StaticResource MutedText}" Margin="0,4,0,0"/>
+                                                        </StackPanel>
+                                                    </RadioButton>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [SectionTest]}" Style="{StaticResource CardTitle}" Margin="0,0,0,10"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Command="{Binding TestClickCommand}" Style="{StaticResource GhostButton}" Margin="0,0,12,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="◎" Margin="0,0,8,0" Foreground="{DynamicResource AccentBrush}"/>
+                                                    <TextBlock Text="{Binding [BtnTestClick]}"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <TextBlock Text="{Binding [HintTest]}" Style="{StaticResource MutedText}" VerticalAlignment="Center" MaxWidth="420"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- ========== НАСТРОЙКИ ========== -->
+                    <TabItem Header="{Binding [TabSettings]}" Tag="⚙">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0"
+                                      local:SmoothScroll.IsEnabled="{Binding SmoothScrolling}">
+                            <StackPanel>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [SectionTheme]}" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock Text="{Binding [HintTheme]}" Style="{StaticResource MutedText}" Margin="0,3,0,12"/>
+
+                                        <ItemsControl ItemsSource="{Binding Themes}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Button Style="{StaticResource ThemeTile}" Width="174" Height="96"
+                                                            AutomationProperties.Name="{Binding DisplayName}"
+                                                            Command="{Binding DataContext.SelectThemeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}" ToolTip="{Binding DisplayName}">
+                                                        <Grid>
+                                                            <Border CornerRadius="11" Background="{Binding PreviewBrush}"/>
+                                                            <Border VerticalAlignment="Bottom" Height="30" CornerRadius="0,0,11,11"
+                                                                    Background="#D20B0F19" Padding="9,0">
+                                                                <Grid>
+                                                                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="11"
+                                                                               FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                                    <Ellipse Width="9" Height="9" Fill="{Binding AccentDot}" HorizontalAlignment="Right"
+                                                                             VerticalAlignment="Center"/>
+                                                                </Grid>
+                                                            </Border>
+                                                        </Grid>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+
+                                <Expander Header="{Binding [SectionCustomColors]}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [HintCustomColors]}" Style="{StaticResource MutedText}" Margin="0,0,0,12"/>
+
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="96"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox Content="{Binding [CustomBackground]}" IsChecked="{Binding UseCustomBackground}" VerticalAlignment="Center"/>
+                                            <Border Grid.Column="1" Width="42" Height="26" CornerRadius="7" Margin="8,0"
+                                                    Background="{Binding CustomBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+                                            <TextBox Grid.Column="2" Text="{Binding CustomBackgroundHex}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Height="30" Padding="6,4"/>
+                                            <Button Grid.Column="3" Content="{Binding [BtnPick]}" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,5"
+                                                    Command="{Binding PickColorCommand}" CommandParameter="Background"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="96"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox Content="{Binding [CustomForeground]}" IsChecked="{Binding UseCustomForeground}" VerticalAlignment="Center"/>
+                                            <Border Grid.Column="1" Width="42" Height="26" CornerRadius="7" Margin="8,0"
+                                                    Background="{Binding CustomForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+                                            <TextBox Grid.Column="2" Text="{Binding CustomForegroundHex}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Height="30" Padding="6,4"/>
+                                            <Button Grid.Column="3" Content="{Binding [BtnPick]}" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,5"
+                                                    Command="{Binding PickColorCommand}" CommandParameter="Foreground"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="96"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox Content="{Binding [CustomBorder]}" IsChecked="{Binding UseCustomBorder}" VerticalAlignment="Center"/>
+                                            <Border Grid.Column="1" Width="42" Height="26" CornerRadius="7" Margin="8,0"
+                                                    Background="{Binding CustomBorderBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+                                            <TextBox Grid.Column="2" Text="{Binding CustomBorderHex}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Height="30" Padding="6,4"/>
+                                            <Button Grid.Column="3" Content="{Binding [BtnPick]}" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,5"
+                                                    Command="{Binding PickColorCommand}" CommandParameter="Border"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="96"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox Content="{Binding [CustomControl]}" IsChecked="{Binding UseCustomControl}" VerticalAlignment="Center"/>
+                                            <Border Grid.Column="1" Width="42" Height="26" CornerRadius="7" Margin="8,0"
+                                                    Background="{Binding CustomControlBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+                                            <TextBox Grid.Column="2" Text="{Binding CustomControlHex}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Height="30" Padding="6,4"/>
+                                            <Button Grid.Column="3" Content="{Binding [BtnPick]}" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,5"
+                                                    Command="{Binding PickColorCommand}" CommandParameter="Control"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="96"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox Content="{Binding [CustomButton]}" IsChecked="{Binding UseCustomButton}" VerticalAlignment="Center"/>
+                                            <Border Grid.Column="1" Width="42" Height="26" CornerRadius="7" Margin="8,0"
+                                                    Background="{Binding CustomButtonBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+                                            <TextBox Grid.Column="2" Text="{Binding CustomButtonHex}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Height="30" Padding="6,4"/>
+                                            <Button Grid.Column="3" Content="{Binding [BtnPick]}" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,5"
+                                                    Command="{Binding PickColorCommand}" CommandParameter="Button"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="96"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox Content="{Binding [CustomAccent]}" IsChecked="{Binding UseCustomAccent}" VerticalAlignment="Center"/>
+                                            <Border Grid.Column="1" Width="42" Height="26" CornerRadius="7" Margin="8,0"
+                                                    Background="{Binding CustomAccentBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+                                            <TextBox Grid.Column="2" Text="{Binding CustomAccentHex}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Height="30" Padding="6,4"/>
+                                            <Button Grid.Column="3" Content="{Binding [BtnPick]}" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,5"
+                                                    Command="{Binding PickColorCommand}" CommandParameter="Accent"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Expander>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [SectionInterface]}" Style="{StaticResource CardTitle}" Margin="0,0,0,12"/>
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding [LabelOpacity]}" Style="{StaticResource FieldLabel}"/>
+                                            <Slider Grid.Column="1" Minimum="0.4" Maximum="1.0" Value="{Binding WindowOpacity}"
+                                                    TickFrequency="0.01" IsSnapToTickEnabled="True" Margin="10,0"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding WindowOpacity, StringFormat={}{0:P0}}"
+                                                       Style="{StaticResource FieldLabel}" Foreground="{DynamicResource ForegroundBrush}"/>
+                                        </Grid>
+                                        <CheckBox Content="{Binding [CheckTopmost]}" IsChecked="{Binding IsTopmost}" Margin="0,0,0,8"/>
+                                        <CheckBox Content="{Binding [CheckTray]}" IsChecked="{Binding MinimizeToTray}" Margin="0,0,0,8"/>
+                                        <CheckBox Content="{Binding [CheckSmooth]}" IsChecked="{Binding SmoothScrolling}"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [SectionLanguage]}" Style="{StaticResource CardTitle}" Margin="0,0,0,10"/>
+                                        <ItemsControl ItemsSource="{Binding LanguageOptions}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <RadioButton Style="{StaticResource OptionChip}" Content="{Binding Label}"
+                                                                 IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                 Command="{Binding DataContext.SelectLanguageCommand, RelativeSource={RelativeSource AncestorType=Window}}" GroupName="LanguageGroup"
+                                                                 CommandParameter="{Binding}"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [SectionProfiles]}" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock Text="{Binding [HintProfiles]}" Style="{StaticResource MutedText}" Margin="0,3,0,12"/>
+
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding [LabelThemeName]}" Style="{StaticResource FieldLabel}"/>
+                                            <TextBox Grid.Column="1" Text="{Binding ThemeConfigName}" Margin="8,0"/>
+                                            <Button Grid.Column="2" Content="{Binding [BtnSaveTheme]}" Style="{StaticResource GhostButton}"
+                                                    Command="{Binding SaveThemeCommand}"/>
+                                        </Grid>
+
+                                        <ListBox ItemsSource="{Binding SavedConfigs}" SelectedItem="{Binding ThemeConfigName}"
+                                                 MaxHeight="130" Margin="0,0,0,10"/>
+
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="{Binding [BtnLoadTheme]}" Style="{StaticResource GhostButton}" Margin="0,0,8,0"
+                                                    Command="{Binding LoadThemeCommand}"/>
+                                            <Button Content="{Binding [BtnDeleteTheme]}" Style="{StaticResource GhostButton}"
+                                                    Command="{Binding DeleteThemeCommand}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [SectionAbout]}" Style="{StaticResource CardTitle}" Margin="0,0,0,6"/>
+                                        <TextBlock Text="{Binding [AboutText]}" Style="{StaticResource MutedText}"/>
+                                        <TextBlock Text="{Binding [HintApp]}" Style="{StaticResource MutedText}" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- ========== ПОМОЩЬ ========== -->
+                    <TabItem Header="{Binding [TabHelp]}" Tag="❓">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0"
+                                      local:SmoothScroll.IsEnabled="{Binding SmoothScrolling}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding [HelpTitle]}" FontSize="20" FontWeight="Bold"
+                                           Foreground="{DynamicResource ForegroundBrush}" Margin="2,0,0,4"/>
+                                <TextBlock Text="{Binding [HelpIntro]}" Style="{StaticResource MutedText}" Margin="2,0,0,16"/>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [HelpStep1Title]}" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock Text="{Binding [HelpStep1Desc]}" Style="{StaticResource MutedText}" Margin="0,6,0,14"/>
+                                        <TextBlock Text="{Binding [HelpStep2Title]}" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock Text="{Binding [HelpStep2Desc]}" Style="{StaticResource MutedText}" Margin="0,6,0,14"/>
+                                        <TextBlock Text="{Binding [HelpStep3Title]}" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock Text="{Binding [HelpStep3Desc]}" Style="{StaticResource MutedText}" Margin="0,6,0,14"/>
+                                        <TextBlock Text="{Binding [HelpStep4Title]}" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock Text="{Binding [HelpStep4Desc]}" Style="{StaticResource MutedText}" Margin="0,6,0,0"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [HelpGamesTitle]}" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock Text="{Binding [HelpGamesDesc]}" Style="{StaticResource MutedText}" Margin="0,6,0,0"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [HelpAcTitle]}" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock Text="{Binding [HelpAcDesc]}" Style="{StaticResource MutedText}" Margin="0,6,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                </TabControl>
+
+                <!-- ===================== НИЖНЯЯ ПАНЕЛЬ ===================== -->
+                <Border Grid.Row="2" Background="{DynamicResource TitleBarBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0" CornerRadius="0,0,16,16" Padding="20,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Grid Width="10" Height="10" VerticalAlignment="Center" Margin="0,0,10,0">
+                                <Ellipse Fill="{DynamicResource SuccessBrush}" Opacity="0.9"/>
+                                <Ellipse x:Name="StatusPulse" Width="10" Height="10" Fill="{DynamicResource SuccessBrush}"
+                                         Opacity="0" RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse.RenderTransform>
+                                        <ScaleTransform x:Name="StatusPulseScale" ScaleX="1" ScaleY="1"/>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                            </Grid>
+                            <TextBlock x:Name="StatusText" Text="{Binding StatusMessage}" FontSize="12"
+                                       Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,18,0">
+                            <StackPanel Margin="0,0,16,0">
+                                <TextBlock Text="{Binding ClicksDone}" Style="{StaticResource StatValue}" HorizontalAlignment="Right"/>
+                                <TextBlock Text="{Binding [LabelClicks]}" Style="{StaticResource StatLabel}" HorizontalAlignment="Right"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,16,0">
+                                <TextBlock Text="{Binding Cps, StringFormat={}{0:0.0}}" Style="{StaticResource StatValue}" HorizontalAlignment="Right"/>
+                                <TextBlock Text="{Binding [LabelCps]}" Style="{StaticResource StatLabel}" HorizontalAlignment="Right"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,16,0">
+                                <TextBlock Text="{Binding ElapsedText}" Style="{StaticResource StatValue}" HorizontalAlignment="Right"/>
+                                <TextBlock Text="{Binding [LabelUptime]}" Style="{StaticResource StatLabel}" HorizontalAlignment="Right"/>
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="{Binding IntervalText}" Style="{StaticResource StatValue}" HorizontalAlignment="Right"/>
+                                <TextBlock Text="{Binding [LabelIntervalShort]}" Style="{StaticResource StatLabel}" HorizontalAlignment="Right"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Grid Margin="0,0,10,0">
+                                <Border x:Name="StartGlow" CornerRadius="14" Background="{DynamicResource AccentGlowBrush}"
+                                        Opacity="0" Margin="-5"/>
+                                <Button x:Name="StartButton" Content="{Binding [BtnStart]}" Command="{Binding StartCommand}"
+                                        Style="{StaticResource PrimaryButton}" Width="140" Height="44" FontSize="14">
+                                    <Button.Effect>
+                                        <DropShadowEffect Color="{DynamicResource AccentColorValue}" BlurRadius="26"
+                                                          ShadowDepth="0" Opacity="0.45"/>
+                                    </Button.Effect>
+                                </Button>
+                            </Grid>
+                            <Button Content="{Binding [BtnStop]}" Command="{Binding StopCommand}"
+                                    Style="{StaticResource DangerButton}" Width="120" Height="44"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ПОДСКАЗКА О ПЕРЕХВАТЕ КЛАВИШИ -->
+        <Border x:Name="CaptureBanner" Panel.ZIndex="60" VerticalAlignment="Top" HorizontalAlignment="Center"
+                Margin="0,70,0,0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource AccentBrush}"
+                BorderThickness="1" CornerRadius="12" Padding="18,12"
+                Visibility="{Binding IsListeningForHotkey, Converter={StaticResource BoolToVis}}">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="⌨" FontSize="16" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding [StatusCapture]}" FontSize="13" FontWeight="SemiBold" Margin="12,0,0,0"
+                           Foreground="{DynamicResource ForegroundBrush}" VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ОВЕРЛЕЙ ВЫБОРА ЦЕЛИ -->
+        <Grid x:Name="SelectionOverlay" Panel.ZIndex="99" Visibility="Collapsed" Background="#D905070C"
+              Cursor="Cross" ClipToBounds="True"
+              MouseLeftButtonDown="Overlay_MouseDown" MouseMove="Overlay_MouseMove" MouseLeftButtonUp="Overlay_MouseUp">
+            <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,80,0,0">
+                <TextBlock x:Name="OverlayTitle" FontSize="22" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                <TextBlock x:Name="OverlayHint" FontSize="12.5" Foreground="#A6FFFFFF" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+            </StackPanel>
+
+            <Canvas x:Name="SelectionCanvas" Background="Transparent">
+                <Rectangle x:Name="SelectionRect" Visibility="Collapsed" Stroke="{DynamicResource AccentBrush}"
+                           StrokeThickness="2" Fill="#2E4C8DFF" RadiusX="3" RadiusY="3"/>
+                <Border x:Name="SizeBadge" Visibility="Collapsed" Background="#F20B0F19" CornerRadius="8"
+                        Padding="9,5" BorderBrush="#40FFFFFF" BorderThickness="1">
+                    <TextBlock x:Name="SizeText" Foreground="White" FontSize="12" FontFamily="{StaticResource MonoFont}"/>
+                </Border>
+            </Canvas>
+
+            <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,56"
+                    Background="#D90B0F19" CornerRadius="10" Padding="16,9" BorderBrush="#33FFFFFF" BorderThickness="1">
+                <TextBlock Text="{Binding [OverlayCancel]}" Foreground="#CCFFFFFF" FontSize="12"/>
+            </Border>
+        </Grid>
+
+        <!-- РУЧКИ ИЗМЕНЕНИЯ РАЗМЕРА -->
+        <Thumb x:Name="GripLeft" Width="8" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="6,18,0,18"
+               Cursor="SizeWE" Background="Transparent" DragDelta="GripLeft_DragDelta"/>
+        <Thumb x:Name="GripRight" Width="8" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,18,6,18"
+               Cursor="SizeWE" Background="Transparent" DragDelta="GripRight_DragDelta"/>
+        <Thumb x:Name="GripTop" Height="8" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="18,6,18,0"
+               Cursor="SizeNS" Background="Transparent" DragDelta="GripTop_DragDelta"/>
+        <Thumb x:Name="GripBottom" Height="8" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Margin="18,0,18,6"
+               Cursor="SizeNS" Background="Transparent" DragDelta="GripBottom_DragDelta"/>
+        <Thumb x:Name="GripTopLeft" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Cursor="SizeNWSE" Background="Transparent" DragDelta="GripTopLeft_DragDelta"/>
+        <Thumb x:Name="GripTopRight" Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Top"
+               Cursor="SizeNESW" Background="Transparent" DragDelta="GripTopRight_DragDelta"/>
+        <Thumb x:Name="GripBottomLeft" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+               Cursor="SizeNESW" Background="Transparent" DragDelta="GripBottomLeft_DragDelta"/>
+        <Thumb x:Name="GripBottomRight" Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+               Cursor="SizeNWSE" Background="Transparent" DragDelta="GripBottomRight_DragDelta"/>
+    </Grid>
+</Window>

@@ -1,39 +1,119 @@
-  Features / Возможности:
--  Zone Selection: Draw a rectangle on screen to click within it. / Выделите область на экране для кликов.
--  Background Mode: Click in minimized or background windows. / Кликайте в свернутые или фоновые окна.
--  Flexible Settings: Interval (h/m/s/ms), mouse button (L/R/M), cyclic mode (click/rest). / Гибкая настройка интервала, кнопки мыши и циклического режима.
--  Randomization: Random offset within zone for human-like behavior. / Случайное смещение внутри зоны для естественности.
--  Auto-Save: Settings saved to JSON automatically. / Автосохранение настроек в JSON.
--  Hotkeys: Customizable start/stop key. / Настраиваемая горячая клавиша старта/стопа.
--  Themes: Dark & Light UI themes. / Тёмная и светлая темы интерфейса.
+# AutoClicker Pro
 
+Быстрый и аккуратный автокликер для Windows: темы интерфейса, фоновый и игровой режимы,
+точный таймер и понятная статистика.
 
+A fast and good-looking auto clicker for Windows: UI themes, background and game modes,
+high-precision timing and clear stats.
 
-  How to Use Background Mode / Как использовать фоновый режим:
+![AutoClicker Pro](docs/screenshot.png)
 
-English:
-1. Click "Select Window" button.
-2. You have 5 seconds — switch to the target window (e.g., browser, game launcher) using Alt+Tab or mouse click.
-3. After 5 seconds, the status will show ✅ "Window selected".
-4. (Optional) Click "Select Zone" to define a specific area within that window where clicks should happen.
-5. Check the "Background Mode" checkbox in settings.
-6. Press START. The app will send clicks directly to the target window even if it's minimized or covered by other apps!
+## Возможности / Features
 
-Русский:
-1. Нажмите кнопку "Выбрать окно".
-2. У вас есть 5 секунд — переключитесь на нужное окно (браузер, лаунчер игры) через Alt+Tab или клик мышью.
-3. Через 5 секунд в статусе появится ✅ "Окно выбрано".
-4. (Опционально) Нажмите "Выбрать зону", чтобы указать конкретную область внутри этого окна, куда должны попадать клики.
-5. Поставьте галочку "Фоновый режим" в настройках.
-6. Нажмите СТАРТ. Программа будет отправлять клики напрямую в целевое окно, даже если оно свёрнуто или перекрыто другими приложениями!
+- **9 готовых тем + своя палитра.** Тема применяется мгновенно, свои цвета можно
+  сохранять и загружать. / 9 built-in themes plus a custom palette that can be saved.
+- **Горячая клавиша с модификаторами** (`Ctrl+Alt+F7`, `F6`, ...). Программа проверяет,
+  не занята ли комбинация, и не теряет старую клавишу при неудаче.
+  / Modifier-aware global hotkey with collision checks.
+- **Три режима:** обычный (SendInput), фоновый (клики прямо в окно, курсор не двигается)
+  и игровой (активация окна + удержание кнопки).
+  / Three modes: foreground, background and game.
+- **Цель:** зона на экране, одна точка или конкретное окно. / Zone, point or window.
+- **Точный интервал** от 1 мс без «плавающих» 15 мс: отдельный поток, `timeBeginPeriod`,
+  компенсация отставания. / Precise timing from 1 ms in a dedicated thread.
+- **Дополнительно:** циклический режим, рандомизация координат, «человеческая» задержка,
+  лимит кликов и лимит времени. / Cyclic mode, randomization, human-like delay, limits.
+- **Статистика:** количество кликов, CPS и время сессии. / Clicks, CPS and uptime.
+- **RU / EN** с переключением на лету, без перезапуска. / Live language switching.
+- **Мелочи:** сворачивание в трей, «поверх всех окон», прозрачность, плавная прокрутка,
+  автосохранение настроек. / Tray, always-on-top, opacity, smooth scrolling, auto-save.
+- **Один exe:** зависимости вшиваются через Costura.Fody. / Single exe via Costura.Fody.
 
-> ⚠️ Note / Примечание: Background mode uses Windows API `SendMessage`. It works great for browsers, launchers, and older games. Modern anti-cheat protected games (Valorant, CS2, etc.) may block these messages. / Фоновый режим использует WinAPI `SendMessage`. Отлично работает для браузеров, лаунчеров и старых игр. Современные игры с античитом могут блокировать такие сообщения.
+## Как запустить / How to run
 
+1. Скачайте `AutoClicker.exe` из раздела **Releases** (или соберите сами, см. ниже).
+2. Запустите. Если SmartScreen предупреждает — «Подробнее» → «Выполнить в любом случае»
+   (приложение без цифровой подписи). / If SmartScreen warns: More info → Run anyway.
+3. Настройте и нажмите **Старт**. / Configure and press Start.
 
+## Фоновый режим / Background mode
 
- 📥 How to Run / Как запустить:
-1. Download `AutoClicker.exe` from Assets below. / Скачайте `AutoClicker.exe` из раздела Assets ниже.
-2. Run the file. (If Windows SmartScreen blocks it: click "More info" → "Run anyway". This is normal for unsigned apps). / Запустите файл. (Если SmartScreen блокирует: нажмите "Подробнее" → "Выполнить в любом случае". Это нормально для приложений без цифровой подписи).
-3. Configure and press START! / Настройте параметры и нажмите СТАРТ!
+1. Вкладка **«Цель»** → **«Выбрать окно»**, затем кликните по нужному окну (даётся 10 секунд).
+2. При необходимости выберите зону или точку внутри него.
+3. Включите режим **«Фоновый»** и нажмите «Старт».
 
-> This is a Pre-release. Found a bug? Create an Issue on GitHub! / Это тестовая версия. Нашли баг? Создайте Issue на GitHub!
+Клики отправляются в окно через `PostMessage` и работают даже если оно свёрнуто или
+перекрыто. Браузеры, лаунчеры и старые игры — да; современные игры с Raw Input такие
+сообщения обычно игнорируют.
+
+/ Clicks are delivered with `PostMessage`, so the window may be minimized. Browsers and
+launchers work; Raw Input games usually ignore these messages.
+
+## Игровой режим / Game mode
+
+Активирует выбранное окно и кликает через `SendInput` с настраиваемым удержанием
+(15–50 мс). Работает в оконном и безрамочном режиме. В эксклюзивном полноэкранном
+режиме игра может блокировать чужие клики — переключите её в оконный/безрамочный режим.
+
+/ Activates the target window and clicks with SendInput plus a configurable hold.
+Use windowed or borderless mode; exclusive fullscreen may block synthetic input.
+
+> ⚠️ **Античит.** В онлайн-играх автоматизация запрещена правилами и может привести к
+> блокировке аккаунта. Используйте на свой риск.
+> **Anti-cheat.** Automation is against the rules in online games and may lead to a ban.
+
+## Сборка из исходников / Build from source
+
+Требования:
+
+- Windows 10/11
+- Visual Studio 2022 с рабочей нагрузкой **«Разработка классических приложений .NET»**
+  (.NET desktop development)
+- .NET Framework 4.7.2 Developer Pack
+- NuGet (Visual Studio восстановит пакеты сам)
+
+```bash
+git clone https://github.com/AlexMDLL/AutoClicker.git
+cd AutoClicker
+```
+
+Откройте `AutoClicker.sln`, дождитесь восстановления NuGet-пакетов и соберите
+**Release**. Готовый файл — `bin\Release\AutoClicker.exe` (один файл, зависимости вшиты).
+
+Сборка из консоли:
+
+```bash
+msbuild AutoClicker.sln /t:Rebuild /p:Configuration=Release
+```
+
+Примечания:
+
+- Ключ подписи ClickOnce (`.pfx`) в репозиторий не добавляется, `SignManifests`
+  отключён — для portable exe подпись манифеста не нужна.
+- Настройки сохраняются рядом с exe, а если папка недоступна для записи —
+  в `%APPDATA%\AutoClickerPro`.
+
+## Структура / Project layout
+
+| Файл | Назначение |
+|------|------------|
+| `MainWindow.xaml` | Разметка окна, вкладки, анимации |
+| `Styles.xaml` | Стили, шаблоны контролов, палитра по умолчанию |
+| `MainViewModel.cs` | Настройки, команды, темы, статистика, автосохранение |
+| `ClickerEngine.cs` | Поток кликера, режимы, точный таймер, CPS |
+| `HotkeyManager.cs` | Глобальные горячие клавиши, проверка занятости |
+| `NativeMethods.cs` | Win32: SendInput, PostMessage, хуки, DPI-safe координаты |
+| `ThemeManager.cs`, `ThemePreset.cs` | Пресеты тем и применение палитры |
+| `SettingsManager.cs`, `AppSettings.cs` | JSON-настройки, миграция, свои темы |
+| `LanguageManager.cs` | Локализация RU/EN |
+| `SmoothScroll.cs` | Плавная прокрутка колесом |
+
+## Ограничения / Limitations
+
+- Только Windows (.NET Framework 4.7.2).
+- Эксклюзивный fullscreen и защищённые античитом игры могут блокировать ввод.
+- Приложение не подписано — SmartScreen может предупреждать при первом запуске.
+
+## Лицензия / License
+
+MIT — см. [LICENSE](LICENSE).
