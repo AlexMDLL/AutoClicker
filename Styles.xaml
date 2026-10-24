@@ -436,6 +436,28 @@
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter TargetName="HeaderBd" Property="Background" Value="{DynamicResource AccentFaintBrush}"/>
                                             </Trigger>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Trigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetName="ArrowRotate" Storyboard.TargetProperty="Angle"
+                                                                             To="90" Duration="0:0:0.22">
+                                                                <DoubleAnimation.EasingFunction>
+                                                                    <CubicEase EasingMode="EaseOut"/>
+                                                                </DoubleAnimation.EasingFunction>
+                                                            </DoubleAnimation>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </Trigger.EnterActions>
+                                                <Trigger.ExitActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetName="ArrowRotate" Storyboard.TargetProperty="Angle"
+                                                                             To="0" Duration="0:0:0.18"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </Trigger.ExitActions>
+                                            </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </ToggleButton.Template>
@@ -458,12 +480,6 @@
                                         </DoubleAnimation>
                                         <DoubleAnimation Storyboard.TargetName="ContentSite" Storyboard.TargetProperty="Opacity"
                                                          To="1" Duration="0:0:0.24"/>
-                                        <DoubleAnimation Storyboard.TargetName="ArrowRotate" Storyboard.TargetProperty="Angle"
-                                                         To="90" Duration="0:0:0.26">
-                                            <DoubleAnimation.EasingFunction>
-                                                <CubicEase EasingMode="EaseOut"/>
-                                            </DoubleAnimation.EasingFunction>
-                                        </DoubleAnimation>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -478,8 +494,6 @@
                                         </DoubleAnimation>
                                         <DoubleAnimation Storyboard.TargetName="ContentSite" Storyboard.TargetProperty="Opacity"
                                                          To="0" Duration="0:0:0.14"/>
-                                        <DoubleAnimation Storyboard.TargetName="ArrowRotate" Storyboard.TargetProperty="Angle"
-                                                         To="0" Duration="0:0:0.22"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
