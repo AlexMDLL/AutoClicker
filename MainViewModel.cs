@@ -694,35 +694,35 @@ namespace AutoClicker
 
         private void PickColor(string kind)
         {
-            using (var dialog = new System.Windows.Forms.ColorDialog { FullOpen = true })
+            Brush currentBrush;
+            switch (kind)
             {
-                Brush currentBrush;
-                switch (kind)
-                {
-                    case "Foreground": currentBrush = CustomForegroundBrush; break;
-                    case "Border": currentBrush = CustomBorderBrush; break;
-                    case "Control": currentBrush = CustomControlBrush; break;
-                    case "Button": currentBrush = CustomButtonBrush; break;
-                    case "Accent": currentBrush = CustomAccentBrush; break;
-                    default: currentBrush = CustomBackgroundBrush; break;
-                }
-                var current = BrushColor(currentBrush, Colors.White);
+                case "Foreground": currentBrush = CustomForegroundBrush; break;
+                case "Border": currentBrush = CustomBorderBrush; break;
+                case "Control": currentBrush = CustomControlBrush; break;
+                case "Button": currentBrush = CustomButtonBrush; break;
+                case "Accent": currentBrush = CustomAccentBrush; break;
+                default: currentBrush = CustomBackgroundBrush; break;
+            }
 
-                dialog.Color = System.Drawing.Color.FromArgb(current.A, current.R, current.G, current.B);
-                if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+            var current = BrushColor(currentBrush, Colors.White);
 
-                var chosen = Color.FromArgb(dialog.Color.A, dialog.Color.R, dialog.Color.G, dialog.Color.B);
-                var brush = ThemeManager.Brush(chosen);
+            var picker = new ColorPickerWindow(current, CurrentLanguage);
+            var owner = Application.Current?.MainWindow;
+            if (owner != null && owner.IsVisible) picker.Owner = owner;
 
-                switch (kind)
-                {
-                    case "Foreground": CustomForegroundBrush = brush; break;
-                    case "Border": CustomBorderBrush = brush; break;
-                    case "Control": CustomControlBrush = brush; break;
-                    case "Button": CustomButtonBrush = brush; break;
-                    case "Accent": CustomAccentBrush = brush; break;
-                    default: CustomBackgroundBrush = brush; break;
-                }
+            if (picker.ShowDialog() != true) return;
+
+            var brush = ThemeManager.Brush(picker.SelectedColor);
+
+            switch (kind)
+            {
+                case "Foreground": CustomForegroundBrush = brush; break;
+                case "Border": CustomBorderBrush = brush; break;
+                case "Control": CustomControlBrush = brush; break;
+                case "Button": CustomButtonBrush = brush; break;
+                case "Accent": CustomAccentBrush = brush; break;
+                default: CustomBackgroundBrush = brush; break;
             }
         }
 

@@ -401,6 +401,7 @@
     <!-- ===================== ЭКСПАНДЕР ===================== -->
     <Style TargetType="Expander">
         <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
+        <Setter Property="Margin" Value="0,0,0,14"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
         <Setter Property="Template">
             <Setter.Value>

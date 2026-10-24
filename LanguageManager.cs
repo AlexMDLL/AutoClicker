@@ -177,7 +177,13 @@ namespace AutoClicker
                     ["OverlayWindowCancel"] = "Подождите 10 секунд или выберите окно кликом",
 
                     ["MsgConfirmDelete"] = "Удалить эту тему?",
-                    ["ToastSaved"] = "Сохранено"
+                    ["ToastSaved"] = "Сохранено",
+                    ["ColorPickerTitle"] = "Выбор цвета",
+                    ["BtnApply"] = "Применить",
+                    ["BtnCancel"] = "Отмена",
+                    ["PreviewOld"] = "Было",
+                    ["PreviewNew"] = "Станет",
+                    ["ColorPickerHint"] = "Перетащите маркер по полю, чтобы выбрать цвет"
                 },
 
                 ["English"] = new Dictionary<string, string>
@@ -350,7 +356,13 @@ namespace AutoClicker
                     ["OverlayWindowCancel"] = "Wait 10 seconds or click the window",
 
                     ["MsgConfirmDelete"] = "Delete this theme?",
-                    ["ToastSaved"] = "Saved"
+                    ["ToastSaved"] = "Saved",
+                    ["ColorPickerTitle"] = "Color picker",
+                    ["BtnApply"] = "Apply",
+                    ["BtnCancel"] = "Cancel",
+                    ["PreviewOld"] = "Before",
+                    ["PreviewNew"] = "After",
+                    ["ColorPickerHint"] = "Drag the marker across the field to pick a color"
                 }
             };
 

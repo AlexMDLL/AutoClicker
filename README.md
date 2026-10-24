@@ -29,6 +29,13 @@ high-precision timing and clear stats.
   автосохранение настроек. / Tray, always-on-top, opacity, smooth scrolling, auto-save.
 - **Один exe:** зависимости вшиваются через Costura.Fody. / Single exe via Costura.Fody.
 
+### Выбор цвета / Color picker
+
+![Color picker](docs/color-picker.png)
+
+Современный пикер вместо системного диалога: поле насыщенности/яркости, слайдер оттенка,
+редактируемые HEX и RGB, HSL/CMYK с копированием и превью «было/станет».
+/ Modern picker: HSV field, hue slider, editable HEX/RGB, copyable HSL/CMYK and a before/after preview.
 ## Как запустить / How to run
 
 1. Скачайте `AutoClicker.exe` из раздела **Releases** (или соберите сами, см. ниже).
