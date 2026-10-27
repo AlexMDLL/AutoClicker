@@ -103,7 +103,7 @@
                     </TabControl.Style>
 
                     <!-- ========== КЛИКЕР ========== -->
-                    <TabItem Header="{Binding [TabClicker]}" Tag="🖱">
+                    <TabItem Header="{Binding [TabClicker]}" Tag="{StaticResource IconMouse}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0"
                                       local:SmoothScroll.IsEnabled="{Binding SmoothScrolling}">
                             <StackPanel>
@@ -321,7 +321,7 @@
                     </TabItem>
 
                     <!-- ========== ЦЕЛЬ ========== -->
-                    <TabItem Header="{Binding [TabTarget]}" Tag="🎯">
+                    <TabItem Header="{Binding [TabTarget]}" Tag="{StaticResource IconTarget}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0"
                                       local:SmoothScroll.IsEnabled="{Binding SmoothScrolling}">
                             <StackPanel>
@@ -424,7 +424,7 @@
                     </TabItem>
 
                     <!-- ========== НАСТРОЙКИ ========== -->
-                    <TabItem Header="{Binding [TabSettings]}" Tag="⚙">
+                    <TabItem Header="{Binding [TabSettings]}" Tag="{StaticResource IconGear}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0"
                                       local:SmoothScroll.IsEnabled="{Binding SmoothScrolling}">
                             <StackPanel>
@@ -660,7 +660,7 @@
                     </TabItem>
 
                     <!-- ========== ПОМОЩЬ ========== -->
-                    <TabItem Header="{Binding [TabHelp]}" Tag="❓">
+                    <TabItem Header="{Binding [TabHelp]}" Tag="{StaticResource IconHelp}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0"
                                       local:SmoothScroll.IsEnabled="{Binding SmoothScrolling}">
                             <StackPanel>

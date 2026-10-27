@@ -719,6 +719,12 @@
         </Setter>
     </Style>
 
+    <!-- Иконки навигации (векторные, красятся темой) -->
+    <PathGeometry x:Key="IconMouse" FillRule="EvenOdd" Figures="M12,2 C8.69,2 6,4.69 6,8 L6,15 C6,18.31 8.69,21 12,21 C15.31,21 18,18.31 18,15 L18,8 C18,4.69 15.31,2 12,2 Z M12,4 C14.21,4 16,5.79 16,8 L16,15 C16,17.21 14.21,19 12,19 C9.79,19 8,17.21 8,15 L8,8 C8,5.79 9.79,4 12,4 Z M11.25,4.2 L12.75,4.2 L12.75,7.6 L11.25,7.6 Z"/>
+    <PathGeometry x:Key="IconTarget" FillRule="EvenOdd" Figures="M12,2 A10,10 0 1 0 12,22 A10,10 0 1 0 12,2 Z M12,5 A7,7 0 1 0 12,19 A7,7 0 1 0 12,5 Z M12,9 A3,3 0 1 0 12,15 A3,3 0 1 0 12,9 Z"/>
+    <PathGeometry x:Key="IconGear" FillRule="EvenOdd" Figures="M19.14,12.94 C19.18,12.64 19.2,12.33 19.2,12 C19.2,11.68 19.18,11.36 19.13,11.06 L21.16,9.48 C21.34,9.34 21.39,9.07 21.28,8.87 L19.36,5.55 C19.24,5.33 18.99,5.26 18.77,5.33 L16.38,6.29 C15.88,5.91 15.35,5.59 14.76,5.35 L14.4,2.81 C14.36,2.57 14.16,2.4 13.92,2.4 L10.08,2.4 C9.84,2.4 9.65,2.57 9.61,2.81 L9.25,5.35 C8.66,5.59 8.12,5.92 7.63,6.29 L5.24,5.33 C5.02,5.25 4.77,5.33 4.65,5.55 L2.74,8.87 C2.62,9.08 2.66,9.34 2.86,9.48 L4.89,11.06 C4.84,11.36 4.8,11.69 4.8,12 C4.8,12.31 4.82,12.64 4.87,12.94 L2.84,14.52 C2.66,14.66 2.61,14.93 2.72,15.13 L4.64,18.45 C4.76,18.67 5.01,18.74 5.23,18.67 L7.62,17.71 C8.12,18.09 8.65,18.41 9.24,18.65 L9.6,21.19 C9.65,21.43 9.84,21.6 10.08,21.6 L13.92,21.6 C14.16,21.6 14.36,21.43 14.39,21.19 L14.75,18.65 C15.34,18.41 15.88,18.08 16.37,17.71 L18.76,18.67 C18.98,18.75 19.23,18.67 19.35,18.45 L21.27,15.13 C21.39,14.91 21.34,14.66 21.14,14.52 L19.14,12.94 Z M12,15.6 C10.02,15.6 8.4,13.98 8.4,12 C8.4,10.02 10.02,8.4 12,8.4 C13.98,8.4 15.6,10.02 15.6,12 C15.6,13.98 13.98,15.6 12,15.6 Z"/>
+    <PathGeometry x:Key="IconHelp" FillRule="EvenOdd" Figures="M12,2 A10,10 0 1 0 12,22 A10,10 0 1 0 12,2 Z M12,4.5 A7.5,7.5 0 1 0 12,19.5 A7.5,7.5 0 1 0 12,4.5 Z M12,6.6 C9.9,6.6 8.35,8 8.1,9.9 L9.9,9.9 C10.1,9 10.95,8.3 12,8.3 C13.1,8.3 14,9.05 14,9.95 C14,10.75 13.55,11.2 12.75,11.7 C11.85,12.25 11.2,12.95 11.2,14.05 L11.2,14.6 L12.95,14.6 L12.95,14.05 C12.95,13.45 13.2,13.05 13.95,12.6 C14.85,12 15.7,11.2 15.7,9.95 C15.7,8 14.1,6.6 12,6.6 Z M11.1,15.7 L12.95,15.7 L12.95,17.5 L11.1,17.5 Z"/>
+
     <!-- ===================== ВКЛАДКИ / НАВИГАЦИЯ ===================== -->
     <Style x:Key="NavItemClassic" TargetType="TabItem">
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -738,7 +744,7 @@
                             </Rectangle.RenderTransform>
                         </Rectangle>
                         <StackPanel Orientation="Horizontal" Margin="16,0,10,0" VerticalAlignment="Center">
-                            <TextBlock x:Name="Icon" Text="{TemplateBinding Tag}" FontSize="14" VerticalAlignment="Center"/>
+                            <Path x:Name="Icon" Data="{TemplateBinding Tag}" Width="16" Height="16" Stretch="Uniform" Fill="{DynamicResource MutedBrush}" VerticalAlignment="Center"/>
                             <TextBlock x:Name="Label" Text="{TemplateBinding Header}" Margin="11,0,0,0" FontSize="12.5"
                                        VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}"/>
                         </StackPanel>
@@ -748,11 +754,13 @@
                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource NavHoverBrush}"/>
                             <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
                             <Setter TargetName="Icon" Property="Opacity" Value="1"/>
+                            <Setter TargetName="Icon" Property="Fill" Value="{DynamicResource ForegroundBrush}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource NavSelectedBrush}"/>
                             <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
                             <Setter TargetName="Label" Property="FontWeight" Value="SemiBold"/>
+                            <Setter TargetName="Icon" Property="Fill" Value="{DynamicResource AccentBrush}"/>
                             <Setter TargetName="Indicator" Property="Opacity" Value="1"/>
                             <Setter TargetName="Indicator" Property="Height" Value="20"/>
                             <Trigger.EnterActions>
@@ -794,15 +802,16 @@
                         <Border x:Name="Bd" CornerRadius="10" Background="Transparent"/>
                         <Rectangle x:Name="Indicator" Width="3" Height="16" HorizontalAlignment="Left" VerticalAlignment="Center"
                                    RadiusX="2" RadiusY="2" Fill="{DynamicResource AccentBrush}" Opacity="0"/>
-                        <TextBlock x:Name="Icon" Text="{TemplateBinding Tag}" FontSize="17"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Path x:Name="Icon" Data="{TemplateBinding Tag}" Width="20" Height="20" Stretch="Uniform" Fill="{DynamicResource MutedBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource NavHoverBrush}"/>
+                            <Setter TargetName="Icon" Property="Fill" Value="{DynamicResource ForegroundBrush}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource NavSelectedBrush}"/>
+                            <Setter TargetName="Icon" Property="Fill" Value="{DynamicResource AccentBrush}"/>
                             <Setter TargetName="Indicator" Property="Opacity" Value="1"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -819,7 +828,7 @@
                 <ControlTemplate TargetType="TabItem">
                     <Border x:Name="Bd" CornerRadius="9" Padding="12,6" Margin="0,0,8,4" Background="Transparent">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock x:Name="Icon" Text="{TemplateBinding Tag}" FontSize="13" VerticalAlignment="Center"/>
+                            <Path x:Name="Icon" Data="{TemplateBinding Tag}" Width="14" Height="14" Stretch="Uniform" Fill="{DynamicResource MutedBrush}" VerticalAlignment="Center"/>
                             <TextBlock x:Name="Label" Text="{TemplateBinding Header}" Margin="8,0,0,0" FontSize="12.5"
                                        VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}"/>
                         </StackPanel>
@@ -828,11 +837,13 @@
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource NavHoverBrush}"/>
                             <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
+                            <Setter TargetName="Icon" Property="Fill" Value="{DynamicResource ForegroundBrush}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentSoftBrush}"/>
                             <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
                             <Setter TargetName="Label" Property="FontWeight" Value="SemiBold"/>
+                            <Setter TargetName="Icon" Property="Fill" Value="{DynamicResource AccentBrush}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -850,10 +861,78 @@
 
             <Border Grid.Column="0" Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,1,1" CornerRadius="0,0,0,14">
-                <DockPanel Margin="12,16,12,14">
-                    <TextBlock DockPanel.Dock="Top" Text="{Binding [NavTitle]}" FontSize="10" FontWeight="Bold"
+                <Grid Margin="12,16,12,14">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="{Binding [NavTitle]}" FontSize="10" FontWeight="Bold"
                                Foreground="{DynamicResource MutedBrush}" Margin="10,0,0,10" Opacity="0.9"/>
-                    <StackPanel DockPanel.Dock="Bottom" Margin="10,10,10,0">
+
+                    <TabPanel Grid.Row="1" x:Name="HeaderPanel" IsItemsHost="True"/>
+
+                    <!-- Сессия: растягивается, статистика сверху, действия снизу -->
+                    <Border Grid.Row="2" Background="{DynamicResource ControlBgBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,12,0,8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="{Binding [SectionSession]}" FontSize="9.5" Foreground="{DynamicResource MutedBrush}" Opacity="0.85"/>
+
+                            <StackPanel Grid.Row="1" Margin="0,6,0,0">
+                                <TextBlock Text="{Binding ClicksDone}" FontSize="30" FontWeight="Bold"
+                                           FontFamily="{StaticResource MonoFont}" Foreground="{DynamicResource ForegroundBrush}"/>
+                                <TextBlock Text="{Binding [LabelClicks]}" FontSize="11" Foreground="{DynamicResource MutedBrush}"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                    <TextBlock Text="{Binding Cps, StringFormat={}{0:0.0}}" FontSize="12" FontFamily="{StaticResource MonoFont}"
+                                               Foreground="{DynamicResource AccentBrush}"/>
+                                    <TextBlock Text="{Binding [LabelCps]}" FontSize="9" Foreground="{DynamicResource MutedBrush}" Margin="4,2,12,0"/>
+                                    <TextBlock Text="{Binding ElapsedText}" FontSize="12" FontFamily="{StaticResource MonoFont}"
+                                               Foreground="{DynamicResource MutedBrush}"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Border Grid.Row="2" Margin="0,8,0,0" ClipToBounds="True" VerticalAlignment="Center">
+                                <Polyline Points="{Binding CpsPoints}" Stroke="{DynamicResource AccentBrush}"
+                                          StrokeThickness="2" StrokeLineJoin="Round" Opacity="0.9"/>
+                            </Border>
+
+                            <Grid Grid.Row="3" Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Content="{Binding [BtnStart]}" Command="{Binding StartCommand}"
+                                        Style="{StaticResource PrimaryButton}" Height="30" FontSize="11" Padding="0"/>
+                                <Button Grid.Column="2" Content="{Binding [BtnStop]}" Command="{Binding StopCommand}"
+                                        Style="{StaticResource DangerButton}" Height="30" FontSize="11" Padding="0"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <!-- Текущая цель -->
+                    <Border Grid.Row="3" Background="{DynamicResource ControlBgBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1" CornerRadius="10" Padding="10,8" Margin="0,0,0,10">
+                        <StackPanel>
+                            <TextBlock Text="{Binding [SectionTarget]}" FontSize="9.5" Foreground="{DynamicResource MutedBrush}" Opacity="0.85"/>
+                            <TextBlock Text="{Binding TargetSummaryText}" FontSize="11" Foreground="{DynamicResource ForegroundBrush}"
+                                       TextTrimming="CharacterEllipsis" Margin="0,3,0,0" ToolTip="{Binding TargetSummaryText}"/>
+                            <TextBlock Text="{Binding ModeText}" FontSize="10" Foreground="{DynamicResource AccentBrush}" Margin="0,3,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Хоткей и версия -->
+                    <StackPanel Grid.Row="4" Margin="10,0,10,0">
                         <Border Background="{DynamicResource ControlBgBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="10" Padding="10,8" Margin="0,0,0,10">
                             <StackPanel>
@@ -866,8 +945,7 @@
                         <TextBlock Text="AutoClicker Pro" FontSize="11" Foreground="{DynamicResource MutedBrush}"/>
                         <TextBlock Text="{Binding AppVersion}" FontSize="10" Foreground="{DynamicResource MutedBrush}" Opacity="0.65"/>
                     </StackPanel>
-                    <TabPanel x:Name="HeaderPanel" IsItemsHost="True"/>
-                </DockPanel>
+                </Grid>
             </Border>
 
             <Border Grid.Column="1" Padding="22,18,22,8">

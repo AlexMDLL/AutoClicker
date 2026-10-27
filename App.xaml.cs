@@ -33,6 +33,15 @@ namespace AutoClicker
             DispatcherUnhandledException += (s, args) =>
             {
                 args.Handled = true;
+
+                try
+                {
+                    string log = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash.log");
+                    System.IO.File.AppendAllText(log,
+                        $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {args.Exception}\r\n\r\n");
+                }
+                catch { }
+
                 MessageBox.Show($"Произошла ошибка:\n{args.Exception.Message}", "AutoClicker Pro",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
             };

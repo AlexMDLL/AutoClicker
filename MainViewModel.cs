@@ -438,6 +438,10 @@ namespace AutoClicker
         private double _cps;
         public double Cps { get => _cps; private set => SetField(ref _cps, Math.Round(value, 1)); }
 
+        // Мини-график CPS для сайдбара
+        private readonly Queue<double> _cpsHistory = new Queue<double>();
+        private PointCollection _cpsPoints = new PointCollection();
+        public PointCollection CpsPoints { get => _cpsPoints; private set => SetField(ref _cpsPoints, value); }
         private string _elapsedText = "00:00";
         public string ElapsedText { get => _elapsedText; private set => SetField(ref _elapsedText, value); }
 
@@ -529,6 +533,7 @@ namespace AutoClicker
             RebuildLocalizedLabels();
             SyncIntervalChips();
             ReloadSavedThemes();
+            ResetSparkline();
             StatusMessage = T("StatusReady");
         }
 
@@ -850,6 +855,7 @@ namespace AutoClicker
             ClicksDone = 0;
             Cps = 0;
             ElapsedText = "00:00";
+            ResetSparkline();
 
             _engine.Start();
             IsRunning = true;
@@ -907,6 +913,7 @@ namespace AutoClicker
         {
             ClicksDone = _engine.ClicksDone;
             Cps = _engine.Cps;
+            UpdateCpsSparkline(Cps);
 
             var elapsed = _engine.Elapsed;
             ElapsedText = elapsed.TotalHours >= 1
@@ -914,6 +921,43 @@ namespace AutoClicker
                 : $"{elapsed.Minutes:00}:{elapsed.Seconds:00}";
         }
 
+        private void UpdateCpsSparkline(double cps)
+        {
+            _cpsHistory.Enqueue(cps);
+            while (_cpsHistory.Count > 48) _cpsHistory.Dequeue();
+            RebuildSparklinePoints();
+        }
+
+        private void ResetSparkline()
+        {
+            _cpsHistory.Clear();
+            for (int i = 0; i < 48; i++) _cpsHistory.Enqueue(0);
+            RebuildSparklinePoints();
+        }
+
+        private void RebuildSparklinePoints()
+        {
+            const double width = 168.0;
+            const double height = 46.0;
+
+            double max = 10.0;
+            foreach (var value in _cpsHistory)
+                if (value > max) max = value;
+
+            var points = new PointCollection();
+            int count = _cpsHistory.Count;
+            int index = 0;
+
+            foreach (var value in _cpsHistory)
+            {
+                double x = count <= 1 ? 0 : index * width / (count - 1);
+                double y = height - 2 - (value / max) * (height - 6);
+                points.Add(new Point(x, y));
+                index++;
+            }
+
+            CpsPoints = points;
+        }
         private void ConfigureEngine()
         {
             _engine.IntervalMs = IntervalHours * 3600000 + IntervalMinutes * 60000 + IntervalSeconds * 1000 + IntervalMs;
