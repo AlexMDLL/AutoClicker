@@ -131,7 +131,7 @@ namespace AutoClicker
             switch (e.PropertyName)
             {
                 case nameof(MainViewModel.WindowOpacity):
-                    if (!_isSelecting) Opacity = VM.WindowOpacity;
+                    if (!_isSelecting) AnimateWindowOpacity(VM.WindowOpacity);
                     break;
                 case nameof(MainViewModel.IsTopmost):
                     if (!_isSelecting) Topmost = VM.IsTopmost;
@@ -164,6 +164,20 @@ namespace AutoClicker
                 scale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
                 scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
             }
+        }
+
+        private void AnimateWindowOpacity(double target)
+        {
+            double from = Opacity;
+            Opacity = target;
+
+            if (Math.Abs(from - target) < 0.001) return;
+
+            BeginAnimation(OpacityProperty, new DoubleAnimation(from, target, TimeSpan.FromMilliseconds(160))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.Stop
+            });
         }
 
         private void AnimateStatus()

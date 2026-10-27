@@ -137,6 +137,9 @@ namespace AutoClicker
                     ["CheckTopmost"] = "Поверх всех окон",
                     ["CheckTray"] = "Сворачивать в трей",
                     ["CheckSmooth"] = "Плавная прокрутка",
+                    ["QuickActions"] = "Быстрые действия",
+                    ["SectionFocus"] = "Фокус окна",
+                    ["CheckPauseUnfocused"] = "Пауза, если окно не в фокусе",
 
                     ["SectionLanguage"] = "Язык",
                     ["SectionProfiles"] = "Сохранённые темы",
@@ -321,6 +324,9 @@ namespace AutoClicker
                     ["CheckTopmost"] = "Always on top",
                     ["CheckTray"] = "Minimize to tray",
                     ["CheckSmooth"] = "Smooth scrolling",
+                    ["QuickActions"] = "Quick actions",
+                    ["SectionFocus"] = "Window focus",
+                    ["CheckPauseUnfocused"] = "Pause when window is unfocused",
 
                     ["SectionLanguage"] = "Language",
                     ["SectionProfiles"] = "Saved themes",

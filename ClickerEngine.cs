@@ -61,6 +61,9 @@ namespace AutoClicker
 
         public ClickMode Mode { get; set; } = ClickMode.Foreground;
 
+        /// <summary>Игровой режим: не кликать, пока целевое окно не в фокусе.</summary>
+        public bool PauseWhenUnfocused { get; set; } = true;
+
         public int ZoneX { get; set; }
         public int ZoneY { get; set; }
         public int ZoneWidth { get; set; }
@@ -213,6 +216,14 @@ namespace AutoClicker
                 {
                     if (EnableClickLimit && ClicksDone >= MaxClicks) { reason = "limit"; break; }
                     if (EnableTimeLimit && timeLimit > TimeSpan.Zero && sw.Elapsed >= timeLimit) { reason = "time"; break; }
+
+                    if (Mode == ClickMode.Game && PauseWhenUnfocused && IsTargetValid()
+                        && NativeMethods.GetForegroundWindow() != TargetWindow)
+                    {
+                        // Ждём, пока игра снова получит фокус — не спамим кликами по другим окнам
+                        if (!WaitUntil(sw.ElapsedTicks + Stopwatch.Frequency / 10, sw)) break;
+                        continue;
+                    }
 
                     if (Mode == ClickMode.Game) EnsureTargetForeground();
 
