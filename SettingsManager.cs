@@ -14,6 +14,7 @@ namespace AutoClicker
     {
         private const string SettingsFileName = "autoclicker_settings.json";
         private const string ThemeFolderName = "theme_configs";
+        private const string ProfilesFolderName = "profiles";
 
         private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
         {
@@ -242,9 +243,84 @@ namespace AutoClicker
 
         private static string ThemePath(string name)
         {
-            string safe = new string((name ?? "My theme").Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray()).Trim();
-            if (string.IsNullOrWhiteSpace(safe)) safe = "My theme";
+            string safe = SafeFileName(name, "My theme");
             return Path.Combine(ThemeDirectory, safe + ".json");
+        }
+
+        private static string SafeFileName(string name, string fallback)
+        {
+            string safe = new string((name ?? string.Empty).Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray()).Trim();
+            if (string.IsNullOrWhiteSpace(safe)) safe = fallback;
+            return safe;
+        }
+
+        // === Профили настроек ===
+
+        public static string ProfilesDirectory => Path.Combine(DataDirectory, ProfilesFolderName);
+
+        public static void SaveProfile(string name, AppSettings settings)
+        {
+            try
+            {
+                if (settings == null || string.IsNullOrWhiteSpace(name)) return;
+                Directory.CreateDirectory(ProfilesDirectory);
+                File.WriteAllText(ProfilePath(name), JsonConvert.SerializeObject(settings, JsonSettings));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Profile] Save error: {ex.Message}");
+            }
+        }
+
+        public static AppSettings LoadProfile(string name)
+        {
+            try
+            {
+                string path = ProfilePath(name);
+                if (!File.Exists(path)) return null;
+                return JsonConvert.DeserializeObject<AppSettings>(File.ReadAllText(path), JsonSettings);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Profile] Load error: {ex.Message}");
+                return null;
+            }
+        }
+
+        public static void DeleteProfile(string name)
+        {
+            try
+            {
+                string path = ProfilePath(name);
+                if (File.Exists(path)) File.Delete(path);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Profile] Delete error: {ex.Message}");
+            }
+        }
+
+        public static List<string> GetProfiles()
+        {
+            try
+            {
+                if (!Directory.Exists(ProfilesDirectory)) return new List<string>();
+                return Directory.GetFiles(ProfilesDirectory, "*.json")
+                    .Select(Path.GetFileNameWithoutExtension)
+                    .Where(n => !string.IsNullOrWhiteSpace(n))
+                    .OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase)
+                    .ToList();
+            }
+            catch
+            {
+                return new List<string>();
+            }
+        }
+
+        private static string ProfilePath(string name)
+        {
+            string safe = SafeFileName(name, "Profile");
+            return Path.Combine(ProfilesDirectory, safe + ".json");
         }
     }
 

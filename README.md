@@ -32,8 +32,10 @@ high-precision timing and clear stats.
   / Three UI layouts: classic sidebar, compact icon rail, minimal top nav.
 - **Турбо-режим:** интервал 0 мс — до ~15 000 кликов/с в фоновом режиме.
   / Turbo mode (0 ms) — up to ~15k clicks/s in background mode.
-- **Быстрые действия и пауза по фокусу:** тест-клик и выбор цели из сайдбара; игровой режим
-  не кликает, пока целевое окно не в фокусе. / Sidebar quick actions and focus-aware pause.
+- **Профили настроек:** сохраняйте всю конфигурацию (интервал, режим, цель, лимиты, хоткей)
+  под именем и переключайтесь одним кликом. / Save and switch full setups as profiles.
+- **Пауза по фокусу:** игровой режим не кликает, пока целевое окно не в фокусе.
+  / Focus-aware pause in game mode.
 
 ### Раскладки / Layouts
 

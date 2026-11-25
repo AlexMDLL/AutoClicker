@@ -419,6 +419,23 @@ namespace AutoClicker
         // === СОХРАНЁННЫЕ ТЕМЫ ===
         public ObservableCollection<string> SavedConfigs { get; } = new ObservableCollection<string>();
 
+        // === ПРОФИЛИ НАСТРОЕК ===
+        public ObservableCollection<string> Profiles { get; } = new ObservableCollection<string>();
+
+        private string _profileName = "My profile";
+        public string ProfileName { get => _profileName; set => SetField(ref _profileName, value); }
+
+        private string _selectedProfile;
+        public string SelectedProfile
+        {
+            get => _selectedProfile;
+            set
+            {
+                if (!SetField(ref _selectedProfile, value)) return;
+                LoadProfileCommand.RaiseCanExecuteChanged();
+                DeleteProfileCommand.RaiseCanExecuteChanged();
+            }
+        }
         private string _themeConfigName = "My theme";
         public string ThemeConfigName { get => _themeConfigName; set => SetField(ref _themeConfigName, value); }
 
@@ -458,6 +475,9 @@ namespace AutoClicker
         public RelayCommand SaveThemeCommand { get; }
         public RelayCommand LoadThemeCommand { get; }
         public RelayCommand DeleteThemeCommand { get; }
+        public RelayCommand SaveProfileCommand { get; }
+        public RelayCommand LoadProfileCommand { get; }
+        public RelayCommand DeleteProfileCommand { get; }
         public RelayCommand<SelectableItem> SelectIntervalCommand { get; }
         public RelayCommand<SelectableItem> SelectMouseButtonCommand { get; }
         public RelayCommand<SelectableItem> SelectModeCommand { get; }
@@ -478,6 +498,7 @@ namespace AutoClicker
         private readonly DispatcherTimer _saveTimer;
         private bool _loading;
         private bool _dirty;
+        private bool _uiActive = true;
 
         public MainViewModel()
         {
@@ -491,6 +512,9 @@ namespace AutoClicker
             SaveThemeCommand = new RelayCommand(SaveThemeConfig);
             LoadThemeCommand = new RelayCommand(LoadThemeConfig);
             DeleteThemeCommand = new RelayCommand(DeleteThemeConfig);
+            SaveProfileCommand = new RelayCommand(SaveProfile);
+            LoadProfileCommand = new RelayCommand(LoadProfile, () => !string.IsNullOrWhiteSpace(SelectedProfile));
+            DeleteProfileCommand = new RelayCommand(DeleteProfile, () => !string.IsNullOrWhiteSpace(SelectedProfile));
             SelectIntervalCommand = new RelayCommand<SelectableItem>(SelectInterval);
             SelectMouseButtonCommand = new RelayCommand<SelectableItem>(SelectMouseButton);
             SelectModeCommand = new RelayCommand<SelectableItem>(SelectMode);
@@ -535,6 +559,7 @@ namespace AutoClicker
             RebuildLocalizedLabels();
             SyncIntervalChips();
             ReloadSavedThemes();
+            LoadProfiles();
             StatusMessage = T("StatusReady");
         }
 
@@ -846,6 +871,61 @@ namespace AutoClicker
                 SavedConfigs.Add(name);
         }
 
+        // === ПРОФИЛИ ===
+
+        private void SaveProfile()
+        {
+            string name = (ProfileName ?? string.Empty).Trim();
+            if (name.Length == 0)
+            {
+                StatusMessage = T("StatusProfileNameRequired");
+                return;
+            }
+
+            SettingsManager.SaveProfile(name, BuildSettings());
+            LoadProfiles();
+            SelectedProfile = name;
+            StatusMessage = string.Format(T("StatusProfileSaved"), name);
+        }
+
+        private void LoadProfile()
+        {
+            if (string.IsNullOrWhiteSpace(SelectedProfile)) return;
+
+            var settings = SettingsManager.LoadProfile(SelectedProfile);
+            if (settings == null)
+            {
+                StatusMessage = T("StatusProfileMissing");
+                return;
+            }
+
+            ApplySettings(settings);
+            OnHotkeyChanged?.Invoke();
+            StatusMessage = string.Format(T("StatusProfileLoaded"), SelectedProfile);
+            MarkDirty();
+        }
+
+        private void DeleteProfile()
+        {
+            if (string.IsNullOrWhiteSpace(SelectedProfile)) return;
+
+            string deleted = SelectedProfile;
+            SettingsManager.DeleteProfile(deleted);
+            LoadProfiles();
+            SelectedProfile = Profiles.FirstOrDefault();
+            StatusMessage = string.Format(T("StatusProfileDeleted"), deleted);
+        }
+
+        private void LoadProfiles()
+        {
+            Profiles.Clear();
+            foreach (var name in SettingsManager.GetProfiles())
+                Profiles.Add(name);
+
+            OnPropertyChanged(nameof(HasProfiles));
+        }
+
+        public bool HasProfiles => Profiles.Count > 0;
         // === ДВИЖОК ===
 
         private void StartEngine()
@@ -860,7 +940,7 @@ namespace AutoClicker
             _engine.Start();
             IsRunning = true;
             StatusMessage = T("StatusRunning");
-            _statsTimer.Start();
+            if (_uiActive) _statsTimer.Start();
 
             if (ClickMode == ClickMode.Background && !HasTargetWindow)
                 StatusMessage = T("StatusWindowMissing");
@@ -907,6 +987,16 @@ namespace AutoClicker
 
                 MarkDirty();
             }));
+        }
+
+        /// <summary>Останавливает обновление статистики, когда окно скрыто/свёрнуто.</summary>
+        public void SetUiActive(bool active)
+        {
+            _uiActive = active;
+            if (!IsRunning) return;
+
+            if (active) _statsTimer.Start();
+            else _statsTimer.Stop();
         }
 
         private void UpdateStats()
@@ -1104,6 +1194,7 @@ namespace AutoClicker
 
                 IsTopmost = s.IsTopmost;
                 _windowOpacity = Math.Max(0.5, Math.Min(1.0, s.WindowOpacity));
+                OnPropertyChanged(nameof(WindowOpacity));
                 MinimizeToTray = s.MinimizeToTray;
                 SmoothScrolling = s.SmoothScrolling;
                 PauseWhenUnfocused = s.PauseWhenUnfocused;

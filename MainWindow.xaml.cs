@@ -66,6 +66,7 @@ namespace AutoClicker
             VM.OnSelectWindow += () => Dispatcher.BeginInvoke(new Action(SelectWindowInteractive));
             VM.OnHotkeyChanged += () => Dispatcher.BeginInvoke(new Action(RegisterCurrentHotkey));
             VM.PropertyChanged += ViewModel_PropertyChanged;
+            IsVisibleChanged += (s, e) => VM.SetUiActive(IsVisible && WindowState != WindowState.Minimized);
 
             Loaded += MainWindow_Loaded;
             Closing += MainWindow_Closing;
@@ -122,6 +123,8 @@ namespace AutoClicker
 
         private void MainWindow_StateChanged(object sender, EventArgs e)
         {
+            VM.SetUiActive(WindowState != WindowState.Minimized && IsVisible);
+
             if (WindowState == WindowState.Minimized && VM.MinimizeToTray)
                 Dispatcher.BeginInvoke(new Action(HideToTray));
         }
@@ -847,12 +850,14 @@ namespace AutoClicker
         private void HideToTray()
         {
             if (_tray == null) return;
+            VM.SetUiActive(false);
             Hide();
         }
 
         private void RestoreFromTray()
         {
             Show();
+            VM.SetUiActive(true);
             WindowState = WindowState.Normal;
             Activate();
             Topmost = VM.IsTopmost;
