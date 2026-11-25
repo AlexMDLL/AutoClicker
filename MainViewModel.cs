@@ -112,6 +112,7 @@ namespace AutoClicker
                 if (!SetField(ref _clickMode, value)) return;
                 SyncOptionSelection(ModeOptions, value);
                 OnPropertyChanged(nameof(ModeText));
+                OnPropertyChanged(nameof(PauseOptionEnabled));
                 PushLiveSettings();
                 MarkDirty();
             }
@@ -193,12 +194,114 @@ namespace AutoClicker
         private bool _hasTargetAnchor;
         public bool HasTargetAnchor { get => _hasTargetAnchor; private set => SetField(ref _hasTargetAnchor, value); }
 
+        public bool HasAnyTarget => HasTargetWindow || HasZone || HasPoint || HasClickPoints;
+
         private IntPtr _targetWindowHandle = IntPtr.Zero;
         public IntPtr TargetWindowHandle { get => _targetWindowHandle; private set => SetField(ref _targetWindowHandle, value); }
 
         private string _targetWindowTitle = string.Empty;
         public string TargetWindowTitle { get => _targetWindowTitle; private set => SetField(ref _targetWindowTitle, value); }
 
+        // === МУЛЬТИ-ТОЧКИ ===
+        public ObservableCollection<ClickPointItem> ClickPoints { get; } = new ObservableCollection<ClickPointItem>();
+
+        private bool _useSequence;
+        public bool UseSequence
+        {
+            get => _useSequence;
+            set
+            {
+                if (!SetField(ref _useSequence, value)) return;
+                PushLiveSettings();
+                MarkDirty();
+                OnPropertyChanged(nameof(HasAnyTarget));
+                ResetTargetCommand?.RaiseCanExecuteChanged();
+            }
+        }
+
+        private bool _sequenceRandomOrder;
+        public bool SequenceRandomOrder
+        {
+            get => _sequenceRandomOrder;
+            set { if (SetField(ref _sequenceRandomOrder, value)) { PushLiveSettings(); MarkDirty(); } }
+        }
+
+        private ClickPointItem _selectedClickPoint;
+        public ClickPointItem SelectedClickPoint
+        {
+            get => _selectedClickPoint;
+            set
+            {
+                if (!SetField(ref _selectedClickPoint, value)) return;
+                RemoveClickPointCommand.RaiseCanExecuteChanged();
+            }
+        }
+
+        public bool IsAddingSequencePoint { get; set; }
+        public bool HasClickPoints => ClickPoints.Count > 0;
+
+        // === АВТОНАЖАТИЕ КЛАВИШ ===
+        public ObservableCollection<KeyBindingItem> KeyBindings { get; } = new ObservableCollection<KeyBindingItem>();
+        public ObservableCollection<SelectableItem> KeyIntervalPresets { get; } = new ObservableCollection<SelectableItem>();
+
+        public event Action OnCaptureKey;
+
+        private readonly KeyPresser _keyPresser = new KeyPresser();
+
+        public bool HasKeyBindings => KeyBindings.Count > 0;
+
+        private bool _isKeysRunning;
+        public bool IsKeysRunning
+        {
+            get => _isKeysRunning;
+            private set
+            {
+                if (!SetField(ref _isKeysRunning, value)) return;
+                StartKeysCommand.RaiseCanExecuteChanged();
+                StopKeysCommand.RaiseCanExecuteChanged();
+            }
+        }
+
+        private long _keysPresses;
+        public long KeysPresses { get => _keysPresses; private set => SetField(ref _keysPresses, value); }
+
+        private int _keyIntervalMs = 100;
+        public int KeyIntervalMs
+        {
+            get => _keyIntervalMs;
+            set
+            {
+                int clamped = Math.Max(0, Math.Min(3600000, value));
+                if (!SetField(ref _keyIntervalMs, clamped)) return;
+
+                SyncKeyIntervalChips();
+                OnPropertyChanged(nameof(KeyIntervalText));
+
+                if (IsKeysRunning) _keyPresser.IntervalMs = clamped;
+                MarkDirty();
+            }
+        }
+
+        public string KeyIntervalText => KeyIntervalMs <= 0 ? T("IntervalTurbo") : $"{KeyIntervalMs} {T("UnitMs")}";
+
+        private bool _keysSimultaneous = true;
+        public bool KeysSimultaneous
+        {
+            get => _keysSimultaneous;
+            set
+            {
+                if (!SetField(ref _keysSimultaneous, value)) return;
+                if (IsKeysRunning) _keyPresser.Simultaneous = value;
+                MarkDirty();
+            }
+        }
+
+        private bool _startKeysWithClicker;
+        public bool StartKeysWithClicker
+        {
+            get => _startKeysWithClicker;
+            set { if (SetField(ref _startKeysWithClicker, value)) MarkDirty(); }
+        }
         public bool HasTargetWindow => TargetWindowHandle != IntPtr.Zero;
         public string WindowText => HasTargetWindow ? TargetWindowTitle : T("TargetNone");
         public string ZoneText => HasZone
@@ -253,6 +356,8 @@ namespace AutoClicker
         }
 
         private bool _pauseWhenUnfocused = true;
+        public bool PauseOptionEnabled => HasTargetWindow && ClickMode != ClickMode.Background;
+
         public bool PauseWhenUnfocused
         {
             get => _pauseWhenUnfocused;
@@ -478,6 +583,17 @@ namespace AutoClicker
         public RelayCommand SaveProfileCommand { get; }
         public RelayCommand LoadProfileCommand { get; }
         public RelayCommand DeleteProfileCommand { get; }
+        public RelayCommand AddClickPointCommand { get; }
+        public RelayCommand RemoveClickPointCommand { get; }
+        public RelayCommand ClearClickPointsCommand { get; }
+        public RelayCommand ResetTargetCommand { get; }
+        public RelayCommand AddKeyBindingCommand { get; }
+        public RelayCommand<KeyBindingItem> RemoveKeyBindingCommand { get; }
+        public RelayCommand ClearKeyBindingsCommand { get; }
+        public RelayCommand StartKeysCommand { get; }
+        public RelayCommand StopKeysCommand { get; }
+        public RelayCommand<SelectableItem> SelectKeyIntervalCommand { get; }
+
         public RelayCommand<SelectableItem> SelectIntervalCommand { get; }
         public RelayCommand<SelectableItem> SelectMouseButtonCommand { get; }
         public RelayCommand<SelectableItem> SelectModeCommand { get; }
@@ -499,6 +615,7 @@ namespace AutoClicker
         private bool _loading;
         private bool _dirty;
         private bool _uiActive = true;
+        private bool _lastPaused;
 
         public MainViewModel()
         {
@@ -515,6 +632,17 @@ namespace AutoClicker
             SaveProfileCommand = new RelayCommand(SaveProfile);
             LoadProfileCommand = new RelayCommand(LoadProfile, () => !string.IsNullOrWhiteSpace(SelectedProfile));
             DeleteProfileCommand = new RelayCommand(DeleteProfile, () => !string.IsNullOrWhiteSpace(SelectedProfile));
+            AddClickPointCommand = new RelayCommand(BeginAddClickPoint);
+            RemoveClickPointCommand = new RelayCommand(RemoveSelectedClickPoint, () => SelectedClickPoint != null);
+            ClearClickPointsCommand = new RelayCommand(ClearClickPoints);
+            ResetTargetCommand = new RelayCommand(ResetTarget, () => HasAnyTarget);
+            AddKeyBindingCommand = new RelayCommand(BeginAddKeyBinding);
+            RemoveKeyBindingCommand = new RelayCommand<KeyBindingItem>(RemoveKeyBinding);
+            ClearKeyBindingsCommand = new RelayCommand(ClearKeyBindings);
+            StartKeysCommand = new RelayCommand(StartKeys, () => !IsKeysRunning);
+            StopKeysCommand = new RelayCommand(StopKeys, () => IsKeysRunning);
+            SelectKeyIntervalCommand = new RelayCommand<SelectableItem>(SelectKeyInterval);
+
             SelectIntervalCommand = new RelayCommand<SelectableItem>(SelectInterval);
             SelectMouseButtonCommand = new RelayCommand<SelectableItem>(SelectMouseButton);
             SelectModeCommand = new RelayCommand<SelectableItem>(SelectMode);
@@ -532,6 +660,7 @@ namespace AutoClicker
 
             BuildThemeList();
             BuildIntervalPresets();
+            BuildKeyIntervalPresets();
             BuildMouseButtons();
             BuildModes();
             BuildLanguages();
@@ -647,6 +776,7 @@ namespace AutoClicker
         {
             CustomThemePreset.DisplayName = T("ThemeCustom");
             BuildIntervalPresets();
+            BuildKeyIntervalPresets();
             BuildMouseButtons();
             BuildModes();
             BuildLanguages();
@@ -926,6 +1056,122 @@ namespace AutoClicker
         }
 
         public bool HasProfiles => Profiles.Count > 0;
+        // === АВТОНАЖАТИЕ КЛАВИШ ===
+
+        private void BeginAddKeyBinding()
+        {
+            StatusMessage = T("KeysPressAny");
+            OnCaptureKey?.Invoke();
+        }
+
+        public void AddKeyBinding(KeyBindingEntry entry)
+        {
+            if (entry == null || entry.VirtualKey <= 0) return;
+
+            var item = new KeyBindingItem
+            {
+                VirtualKey = entry.VirtualKey,
+                Ctrl = entry.Ctrl,
+                Shift = entry.Shift,
+                Alt = entry.Alt,
+                Win = entry.Win,
+                Enabled = entry.Enabled
+            };
+            item.PropertyChanged += KeyBinding_PropertyChanged;
+            KeyBindings.Add(item);
+
+            OnPropertyChanged(nameof(HasKeyBindings));
+            StatusMessage = $"{T("KeysAdded")}: {item.Display}";
+            MarkDirty();
+        }
+
+        private void KeyBinding_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != nameof(KeyBindingItem.Enabled)) return;
+
+            MarkDirty();
+            if (IsKeysRunning) UpdateKeyEngineBindings();
+        }
+
+        private void RemoveKeyBinding(KeyBindingItem item)
+        {
+            if (item == null) return;
+
+            item.PropertyChanged -= KeyBinding_PropertyChanged;
+            KeyBindings.Remove(item);
+            OnPropertyChanged(nameof(HasKeyBindings));
+
+            if (IsKeysRunning) UpdateKeyEngineBindings();
+            if (KeyBindings.Count == 0 && IsKeysRunning) StopKeys();
+
+            MarkDirty();
+        }
+
+        private void ClearKeyBindings()
+        {
+            if (IsKeysRunning) StopKeys();
+
+            foreach (var item in KeyBindings)
+                item.PropertyChanged -= KeyBinding_PropertyChanged;
+
+            KeyBindings.Clear();
+            OnPropertyChanged(nameof(HasKeyBindings));
+            MarkDirty();
+        }
+
+        private void StartKeys()
+        {
+            if (KeyBindings.Count == 0)
+            {
+                StatusMessage = T("KeysNoBindings");
+                return;
+            }
+
+            _keyPresser.IntervalMs = KeyIntervalMs;
+            _keyPresser.Simultaneous = KeysSimultaneous;
+            UpdateKeyEngineBindings();
+            _keyPresser.Start();
+
+            IsKeysRunning = _keyPresser.IsRunning;
+            if (IsKeysRunning) StatusMessage = T("KeysStarted");
+        }
+
+        private void StopKeys()
+        {
+            _keyPresser.Stop();
+            IsKeysRunning = false;
+            KeysPresses = _keyPresser.Presses;
+        }
+
+        private void UpdateKeyEngineBindings()
+        {
+            _keyPresser.SetBindings(KeyBindings.Select(b => b.ToEntry()));
+        }
+
+        private void SelectKeyInterval(SelectableItem item)
+        {
+            if (item?.Tag is int ms) KeyIntervalMs = ms;
+        }
+
+        private void BuildKeyIntervalPresets()
+        {
+            KeyIntervalPresets.Clear();
+            KeyIntervalPresets.Add(new SelectableItem { Label = T("IntervalTurbo"), Tag = 0 });
+
+            foreach (int ms in new[] { 1, 10, 50, 100, 250, 500, 1000 })
+            {
+                string label = ms >= 1000 ? $"1 {T("UnitSeconds")}" : $"{ms} {T("UnitMs")}";
+                KeyIntervalPresets.Add(new SelectableItem { Label = label, Tag = ms });
+            }
+
+            SyncKeyIntervalChips();
+        }
+
+        private void SyncKeyIntervalChips()
+        {
+            foreach (var chip in KeyIntervalPresets)
+                chip.IsSelected = chip.Tag is int ms && ms == KeyIntervalMs;
+        }
         // === ДВИЖОК ===
 
         private void StartEngine()
@@ -936,6 +1182,7 @@ namespace AutoClicker
             ClicksDone = 0;
             Cps = 0;
             ElapsedText = "00:00";
+            _lastPaused = false;
 
             _engine.Start();
             IsRunning = true;
@@ -946,12 +1193,15 @@ namespace AutoClicker
                 StatusMessage = T("StatusWindowMissing");
             else if (ClickMode == ClickMode.Game && !HasTargetWindow)
                 StatusMessage = T("StatusWindowMissing");
+
+            if (StartKeysWithClicker && HasKeyBindings) StartKeys();
         }
 
         private void StopEngine()
         {
             if (!IsRunning) return;
             _engine.Stop();
+            if (StartKeysWithClicker) StopKeys();
         }
 
         public void ToggleRun()
@@ -969,6 +1219,8 @@ namespace AutoClicker
 
         private void OnEngineStopped(string reason)
         {
+            if (StartKeysWithClicker) StopKeys();
+
             var app = Application.Current;
             if (app == null) return;
 
@@ -1003,6 +1255,14 @@ namespace AutoClicker
         {
             ClicksDone = _engine.ClicksDone;
             Cps = _engine.Cps;
+            KeysPresses = _keyPresser.Presses;
+
+            bool paused = _engine.IsPaused;
+            if (paused != _lastPaused)
+            {
+                _lastPaused = paused;
+                StatusMessage = paused ? T("StatusPausedFocus") : T("StatusRunning");
+            }
 
             var elapsed = _engine.Elapsed;
             ElapsedText = elapsed.TotalHours >= 1
@@ -1023,6 +1283,9 @@ namespace AutoClicker
             _engine.ZoneWidth = ZoneWidth;
             _engine.ZoneHeight = ZoneHeight;
             _engine.TargetWindow = TargetWindowHandle;
+            _engine.UseSequence = UseSequence;
+            _engine.SequenceRandomOrder = SequenceRandomOrder;
+            _engine.Sequence = ClickPoints.Select(p => new ClickPointEntry { X = p.X, Y = p.Y }).ToList();
             _engine.EnableCyclicMode = EnableCyclicMode;
             _engine.ClickDuration = ClickDuration;
             _engine.RestDuration = RestDuration;
@@ -1089,6 +1352,68 @@ namespace AutoClicker
             OnTargetChanged();
         }
 
+        private void ResetTarget()
+        {
+            if (IsRunning) StopEngine();
+
+            ZoneX = 0;
+            ZoneY = 0;
+            ClearTarget();
+            ClearClickPoints();
+
+            StatusMessage = T("StatusTargetCleared");
+            MarkDirty();
+        }
+
+        // === МУЛЬТИ-ТОЧКИ ===
+
+        private void BeginAddClickPoint()
+        {
+            IsAddingSequencePoint = true;
+            StatusMessage = T("StatusSelectPoint");
+            OnSelectPoint?.Invoke();
+        }
+
+        public void AddClickPoint(int x, int y)
+        {
+            IsAddingSequencePoint = false;
+
+            var point = new ClickPointItem { X = x, Y = y };
+            ClickPoints.Add(point);
+            SelectedClickPoint = point;
+            UseSequence = true;
+
+            OnPropertyChanged(nameof(HasClickPoints));
+            OnPropertyChanged(nameof(HasAnyTarget));
+            ResetTargetCommand?.RaiseCanExecuteChanged();
+            StatusMessage = $"{T("StatusPointAdded")}: {x}, {y}";
+            MarkDirty();
+        }
+
+        private void RemoveSelectedClickPoint()
+        {
+            if (SelectedClickPoint == null) return;
+
+            ClickPoints.Remove(SelectedClickPoint);
+            SelectedClickPoint = ClickPoints.LastOrDefault();
+            if (ClickPoints.Count == 0) UseSequence = false;
+
+            OnPropertyChanged(nameof(HasClickPoints));
+            OnPropertyChanged(nameof(HasAnyTarget));
+            ResetTargetCommand?.RaiseCanExecuteChanged();
+            MarkDirty();
+        }
+
+        private void ClearClickPoints()
+        {
+            ClickPoints.Clear();
+            SelectedClickPoint = null;
+            UseSequence = false;
+            OnPropertyChanged(nameof(HasClickPoints));
+            OnPropertyChanged(nameof(HasAnyTarget));
+            ResetTargetCommand?.RaiseCanExecuteChanged();
+            MarkDirty();
+        }
         private void OnTargetChanged()
         {
             OnPropertyChanged(nameof(HasZone));
@@ -1097,6 +1422,9 @@ namespace AutoClicker
             OnPropertyChanged(nameof(ZoneText));
             OnPropertyChanged(nameof(WindowText));
             OnPropertyChanged(nameof(TargetSummaryText));
+            OnPropertyChanged(nameof(PauseOptionEnabled));
+            OnPropertyChanged(nameof(HasAnyTarget));
+            ResetTargetCommand?.RaiseCanExecuteChanged();
             MarkDirty();
         }
 
@@ -1183,6 +1511,30 @@ namespace AutoClicker
                 ZoneHeight = s.ZoneHeight;
                 HasTargetAnchor = s.ZoneWidth == 0 && s.ZoneHeight == 0 && (s.ZoneX != 0 || s.ZoneY != 0);
                 _targetWindowTitle = s.TargetWindowTitle ?? string.Empty;
+
+                UseSequence = s.UseSequence;
+                SequenceRandomOrder = s.SequenceRandomOrder;
+
+                KeyIntervalMs = s.KeyIntervalMs;
+                KeysSimultaneous = s.KeysSimultaneous;
+                StartKeysWithClicker = s.StartKeysWithClicker;
+                KeyBindings.Clear();
+                foreach (var binding in s.KeyBindings ?? new List<KeyBindingEntry>())
+                    KeyBindings.Add(new KeyBindingItem
+                    {
+                        VirtualKey = binding.VirtualKey,
+                        Ctrl = binding.Ctrl,
+                        Shift = binding.Shift,
+                        Alt = binding.Alt,
+                        Win = binding.Win,
+                        Enabled = binding.Enabled
+                    });
+                OnPropertyChanged(nameof(HasKeyBindings));
+                ClickPoints.Clear();
+                foreach (var point in s.ClickPoints ?? new List<ClickPointEntry>())
+                    ClickPoints.Add(new ClickPointItem { X = point.X, Y = point.Y });
+                SelectedClickPoint = ClickPoints.FirstOrDefault();
+                OnPropertyChanged(nameof(HasClickPoints));
                 _hasTargetAnchor = HasTargetAnchor;
 
                 HotkeyVk = s.HotkeyVk;
@@ -1301,6 +1653,13 @@ namespace AutoClicker
                 ZoneWidth = ZoneWidth,
                 ZoneHeight = ZoneHeight,
                 TargetWindowTitle = TargetWindowTitle,
+                UseSequence = UseSequence,
+                SequenceRandomOrder = SequenceRandomOrder,
+                ClickPoints = ClickPoints.Select(p => new ClickPointEntry { X = p.X, Y = p.Y }).ToList(),
+                KeyBindings = KeyBindings.Select(b => b.ToEntry()).ToList(),
+                KeyIntervalMs = KeyIntervalMs,
+                KeysSimultaneous = KeysSimultaneous,
+                StartKeysWithClicker = StartKeysWithClicker,
                 HotkeyVk = HotkeyVk,
                 HotkeyModifiers = HotkeyModifiers,
                 HotkeyDisplay = HotkeyEnabled ? HotkeyManager.Format(HotkeyModifiers, HotkeyVk) : string.Empty,
@@ -1342,5 +1701,42 @@ namespace AutoClicker
             _saveTimer?.Stop();
             _saveTimer?.Start();
         }
+    }
+
+    /// <summary>Точка последовательности кликов.</summary>
+    public class ClickPointItem : BaseViewModel
+    {
+        public int X { get; set; }
+        public int Y { get; set; }
+        public string Display => $"{X}, {Y}";
+    }
+
+    /// <summary>Привязка клавиши в интерфейсе.</summary>
+    public class KeyBindingItem : BaseViewModel
+    {
+        public int VirtualKey { get; set; }
+        public bool Ctrl { get; set; }
+        public bool Shift { get; set; }
+        public bool Alt { get; set; }
+        public bool Win { get; set; }
+
+        private bool _enabled = true;
+        public bool Enabled
+        {
+            get => _enabled;
+            set => SetField(ref _enabled, value);
+        }
+
+        public string Display => KeyNames.Format(Ctrl, Shift, Alt, Win, VirtualKey);
+
+        public KeyBindingEntry ToEntry() => new KeyBindingEntry
+        {
+            VirtualKey = VirtualKey,
+            Ctrl = Ctrl,
+            Shift = Shift,
+            Alt = Alt,
+            Win = Win,
+            Enabled = Enabled
+        };
     }
 }

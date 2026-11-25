@@ -14,6 +14,11 @@ namespace AutoClicker
     {
         public static ThemePreset Current { get; private set; }
 
+        private static ThemePreset _defaultPreset;
+
+        /// <summary>Пресет по умолчанию (кэш, чтобы не создавать все темы на старте).</summary>
+        public static ThemePreset DefaultPreset => _defaultPreset ?? (_defaultPreset = CreatePresets()[0]);
+
         public static List<ThemePreset> CreatePresets()
         {
             return new List<ThemePreset>

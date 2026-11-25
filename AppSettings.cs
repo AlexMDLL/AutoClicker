@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace AutoClicker
 {
@@ -60,6 +61,17 @@ namespace AutoClicker
         public double WindowOpacity { get; set; } = 1.0;
         public string UiLayout { get; set; } = "Classic";
         public bool PauseWhenUnfocused { get; set; } = true;
+
+        // === МУЛЬТИ-ТОЧКИ ===
+        public bool UseSequence { get; set; }
+        public bool SequenceRandomOrder { get; set; }
+        public List<ClickPointEntry> ClickPoints { get; set; } = new List<ClickPointEntry>();
+
+        // === АВТОНАЖАТИЕ КЛАВИШ ===
+        public List<KeyBindingEntry> KeyBindings { get; set; } = new List<KeyBindingEntry>();
+        public int KeyIntervalMs { get; set; } = 100;
+        public bool KeysSimultaneous { get; set; } = true;
+        public bool StartKeysWithClicker { get; set; }
         public bool MinimizeToTray { get; set; }
         public bool SmoothScrolling { get; set; } = true;
 
@@ -79,6 +91,24 @@ namespace AutoClicker
         public bool UseCustomAccent { get; set; } = true;
 
         public AppSettings Clone() => (AppSettings)MemberwiseClone();
+    }
+
+    /// <summary>Привязка клавиши/сочетания для автонажатия.</summary>
+    public class KeyBindingEntry
+    {
+        public int VirtualKey { get; set; }
+        public bool Ctrl { get; set; }
+        public bool Shift { get; set; }
+        public bool Alt { get; set; }
+        public bool Win { get; set; }
+        public bool Enabled { get; set; } = true;
+    }
+
+    /// <summary>Точка для последовательного клика.</summary>
+    public class ClickPointEntry
+    {
+        public int X { get; set; }
+        public int Y { get; set; }
     }
 
     public enum MouseButtonKind

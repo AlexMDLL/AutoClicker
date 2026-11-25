@@ -66,6 +66,7 @@ namespace AutoClicker
             VM.OnSelectWindow += () => Dispatcher.BeginInvoke(new Action(SelectWindowInteractive));
             VM.OnHotkeyChanged += () => Dispatcher.BeginInvoke(new Action(RegisterCurrentHotkey));
             VM.PropertyChanged += ViewModel_PropertyChanged;
+            VM.OnCaptureKey += CaptureKeyBinding;
             IsVisibleChanged += (s, e) => VM.SetUiActive(IsVisible && WindowState != WindowState.Minimized);
 
             Loaded += MainWindow_Loaded;
@@ -100,6 +101,7 @@ namespace AutoClicker
 
         private void MainWindow_Closing(object sender, CancelEventArgs e)
         {
+            try { VM.StopKeysCommand.Execute(null); } catch { }
             if (VM.MinimizeToTray && !_exiting)
             {
                 e.Cancel = true;
@@ -276,6 +278,7 @@ namespace AutoClicker
             {
                 e.Handled = true;
                 EndSelection();
+                VM.IsAddingSequencePoint = false;
                 VM.StatusMessage = LanguageManager.GetString(VM.CurrentLanguage, "StatusReady");
                 return;
             }
@@ -620,7 +623,8 @@ namespace AutoClicker
             }
             else
             {
-                VM.UpdatePoint((int)endScreen.X, (int)endScreen.Y);
+                if (VM.IsAddingSequencePoint) VM.AddClickPoint((int)endScreen.X, (int)endScreen.Y);
+                else VM.UpdatePoint((int)endScreen.X, (int)endScreen.Y);
             }
         }
 
@@ -861,6 +865,19 @@ namespace AutoClicker
             WindowState = WindowState.Normal;
             Activate();
             Topmost = VM.IsTopmost;
+        }
+
+        private void CaptureKeyBinding()
+        {
+            var dialog = new KeyCaptureWindow(VM.CurrentLanguage) { Owner = this };
+            if (dialog.ShowDialog() == true && dialog.Result != null)
+                VM.AddKeyBinding(dialog.Result);
+        }
+
+        private void OpenScripts_Click(object sender, RoutedEventArgs e)
+        {
+            var window = new ScriptWindow(VM.CurrentLanguage) { Owner = this };
+            window.ShowDialog();
         }
 
         private string T(string key) => LanguageManager.GetString(VM.CurrentLanguage, key);

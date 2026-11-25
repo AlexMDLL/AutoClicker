@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -39,6 +40,7 @@ namespace AutoClicker
 
         private DateTime _lastActivation = DateTime.MinValue;
         private int _turboYieldCounter;
+        private int _sequenceIndex;
 
         public event Action Started;
         public event Action<string> Stopped; // null — остановили вручную
@@ -69,6 +71,14 @@ namespace AutoClicker
         public int ZoneWidth { get; set; }
         public int ZoneHeight { get; set; }
         public IntPtr TargetWindow { get; set; } = IntPtr.Zero;
+
+        // Мульти-точки: клики по очереди
+        public bool UseSequence { get; set; }
+        public bool SequenceRandomOrder { get; set; }
+        public List<ClickPointEntry> Sequence { get; set; } = new List<ClickPointEntry>();
+
+        /// <summary>Движок на паузе (например, целевое окно не в фокусе).</summary>
+        public bool IsPaused { get; private set; }
 
         public bool EnableCyclicMode { get; set; }
         public double ClickDuration { get; set; } = 5.0;
@@ -169,6 +179,8 @@ namespace AutoClicker
             _running = true;
             _lastActivation = DateTime.MinValue;
             _turboYieldCounter = 0;
+            _sequenceIndex = 0;
+            IsPaused = false;
 
             _thread = new Thread(Run)
             {
@@ -217,13 +229,17 @@ namespace AutoClicker
                     if (EnableClickLimit && ClicksDone >= MaxClicks) { reason = "limit"; break; }
                     if (EnableTimeLimit && timeLimit > TimeSpan.Zero && sw.Elapsed >= timeLimit) { reason = "time"; break; }
 
-                    if (Mode == ClickMode.Game && PauseWhenUnfocused && IsTargetValid()
+                    
+
+                    if (PauseWhenUnfocused && Mode != ClickMode.Background && IsTargetValid()
                         && NativeMethods.GetForegroundWindow() != TargetWindow)
                     {
-                        // Ждём, пока игра снова получит фокус — не спамим кликами по другим окнам
-                        if (!WaitUntil(sw.ElapsedTicks + Stopwatch.Frequency / 10, sw)) break;
+                        IsPaused = true;
+                        if (!WaitUntil(sw.ElapsedTicks + Stopwatch.Frequency / 20, sw)) break;
                         continue;
                     }
+
+                    IsPaused = false;
 
                     if (Mode == ClickMode.Game) EnsureTargetForeground();
 
@@ -265,6 +281,7 @@ namespace AutoClicker
                 NativeMethods.SetThreadExecutionState(NativeMethods.ES_CONTINUOUS);
                 _running = false;
                 _startTicks = 0;
+                IsPaused = false;
                 try { Stopped?.Invoke(reason); } catch { }
             }
         }
@@ -345,6 +362,30 @@ namespace AutoClicker
         {
             x = 0;
             y = 0;
+
+            if (UseSequence && Sequence != null && Sequence.Count > 0)
+            {
+                int index;
+                if (SequenceRandomOrder)
+                {
+                    index = _rng.Next(Sequence.Count);
+                }
+                else
+                {
+                    index = _sequenceIndex % Sequence.Count;
+                    _sequenceIndex = (index + 1) % Sequence.Count;
+                }
+
+                x = Sequence[index].X;
+                y = Sequence[index].Y;
+
+                if (EnableRandomization)
+                {
+                    x += _rng.Next(-Math.Max(1, RandomOffsetX), Math.Max(1, RandomOffsetX) + 1);
+                    y += _rng.Next(-Math.Max(1, RandomOffsetY), Math.Max(1, RandomOffsetY) + 1);
+                }
+                return true;
+            }
 
             if (ZoneWidth > 0 && ZoneHeight > 0)
             {

@@ -46,7 +46,7 @@ namespace AutoClicker
                     MessageBoxButton.OK, MessageBoxImage.Warning);
             };
 
-            ThemeManager.Apply(ThemeManager.CreatePresets()[0]);
+            ThemeManager.Apply(ThemeManager.DefaultPreset);
 
             base.OnStartup(e);
         }

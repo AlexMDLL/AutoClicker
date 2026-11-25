@@ -71,6 +71,9 @@
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=10.0.0.11, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Bcl.AsyncInterfaces.10.0.11\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
     </Reference>
+    <Reference Include="MoonSharp.Interpreter">
+      <HintPath>packages\MoonSharp.2.0.0\lib\net40-client\MoonSharp.Interpreter.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>packages\Newtonsoft.Json.13.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -145,6 +148,22 @@
       <DependentUpon>ColorPickerWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="KeyCaptureWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="KeyCaptureWindow.xaml.cs">
+      <DependentUpon>KeyCaptureWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Page Include="ScriptWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="ScriptWindow.xaml.cs">
+      <DependentUpon>ScriptWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -161,6 +180,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="NativeMethods.cs" />
+    <Compile Include="KeyNames.cs" />
+    <Compile Include="KeyPresser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

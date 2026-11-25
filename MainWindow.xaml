@@ -294,26 +294,41 @@
                                                 <TextBlock Text="{Binding ModeText}" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Grid>
-                                        <WrapPanel Margin="0,12,0,0">
-                                            <Button Command="{Binding SelectAreaCommand}" Style="{StaticResource GhostButton}" Margin="0,0,8,0">
+                                        <Grid Margin="0,12,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <WrapPanel Grid.Column="0">
+                                                <Button Command="{Binding SelectAreaCommand}" Style="{StaticResource GhostButton}" Margin="0,0,8,0">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="▣" Margin="0,0,7,0" Foreground="{DynamicResource AccentBrush}"/>
+                                                        <TextBlock Text="{Binding [BtnSelectZone]}"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Command="{Binding SelectPointCommand}" Style="{StaticResource GhostButton}" Margin="0,0,8,0">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="✦" Margin="0,0,7,0" Foreground="{DynamicResource AccentBrush}"/>
+                                                        <TextBlock Text="{Binding [BtnSelectPoint]}"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Command="{Binding SelectWindowCommand}" Style="{StaticResource GhostButton}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="🪟" Margin="0,0,7,0"/>
+                                                        <TextBlock Text="{Binding [BtnSelectWindow]}"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </WrapPanel>
+
+                                            <Button Grid.Column="1" Command="{Binding ResetTargetCommand}" Style="{StaticResource GhostButton}"
+                                                    Margin="12,0,0,0" VerticalAlignment="Center" ToolTip="{Binding [HintResetTarget]}">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="▣" Margin="0,0,7,0" Foreground="{DynamicResource AccentBrush}"/>
-                                                    <TextBlock Text="{Binding [BtnSelectZone]}"/>
+                                                    <TextBlock Text="✕" Margin="0,0,7,0" Foreground="{DynamicResource DangerBrush}"/>
+                                                    <TextBlock Text="{Binding [BtnResetTarget]}"/>
                                                 </StackPanel>
                                             </Button>
-                                            <Button Command="{Binding SelectPointCommand}" Style="{StaticResource GhostButton}" Margin="0,0,8,0">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="✦" Margin="0,0,7,0" Foreground="{DynamicResource AccentBrush}"/>
-                                                    <TextBlock Text="{Binding [BtnSelectPoint]}"/>
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Command="{Binding SelectWindowCommand}" Style="{StaticResource GhostButton}">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="🪟" Margin="0,0,7,0"/>
-                                                    <TextBlock Text="{Binding [BtnSelectWindow]}"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </WrapPanel>
+                                        </Grid>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
@@ -330,26 +345,41 @@
                                     <StackPanel>
                                         <TextBlock Text="{Binding [SectionTarget]}" Style="{StaticResource CardTitle}"/>
                                         <TextBlock Text="{Binding [HintTarget]}" Style="{StaticResource MutedText}" Margin="0,3,0,14"/>
-                                        <WrapPanel>
-                                            <Button Command="{Binding SelectAreaCommand}" Style="{StaticResource PrimaryButton}" Margin="0,0,10,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <WrapPanel Grid.Column="0">
+                                                <Button Command="{Binding SelectAreaCommand}" Style="{StaticResource PrimaryButton}" Margin="0,0,10,8">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="▣" Margin="0,0,8,0"/>
+                                                        <TextBlock Text="{Binding [BtnSelectZone]}"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Command="{Binding SelectPointCommand}" Style="{StaticResource GhostButton}" Margin="0,0,10,8">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="✦" Margin="0,0,8,0" Foreground="{DynamicResource AccentBrush}"/>
+                                                        <TextBlock Text="{Binding [BtnSelectPoint]}"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Command="{Binding SelectWindowCommand}" Style="{StaticResource GhostButton}" Margin="0,0,10,8">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="🪟" Margin="0,0,8,0"/>
+                                                        <TextBlock Text="{Binding [BtnSelectWindow]}"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </WrapPanel>
+
+                                            <Button Grid.Column="1" Command="{Binding ResetTargetCommand}" Style="{StaticResource GhostButton}"
+                                                    Margin="12,0,0,8" VerticalAlignment="Top" ToolTip="{Binding [HintResetTarget]}">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="▣" Margin="0,0,8,0"/>
-                                                    <TextBlock Text="{Binding [BtnSelectZone]}"/>
+                                                    <TextBlock Text="✕" Margin="0,0,8,0" Foreground="{DynamicResource DangerBrush}"/>
+                                                    <TextBlock Text="{Binding [BtnResetTarget]}"/>
                                                 </StackPanel>
                                             </Button>
-                                            <Button Command="{Binding SelectPointCommand}" Style="{StaticResource GhostButton}" Margin="0,0,10,8">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="✦" Margin="0,0,8,0" Foreground="{DynamicResource AccentBrush}"/>
-                                                    <TextBlock Text="{Binding [BtnSelectPoint]}"/>
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Command="{Binding SelectWindowCommand}" Style="{StaticResource GhostButton}" Margin="0,0,10,8">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="🪟" Margin="0,0,8,0"/>
-                                                    <TextBlock Text="{Binding [BtnSelectWindow]}"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </WrapPanel>
+                                        </Grid>
                                     </StackPanel>
                                 </Border>
 
@@ -383,6 +413,32 @@
 
                                 <Border Style="{StaticResource Card}">
                                     <StackPanel>
+                                        <TextBlock Text="{Binding [SectionPoints]}" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock Text="{Binding [HintPoints]}" Style="{StaticResource MutedText}" Margin="0,3,0,10"/>
+                                        <CheckBox Content="{Binding [CheckUsePoints]}" IsChecked="{Binding UseSequence}" Margin="0,0,0,6"/>
+                                        <CheckBox Content="{Binding [CheckRandomOrder]}" IsChecked="{Binding SequenceRandomOrder}"
+                                                  IsEnabled="{Binding UseSequence}" Margin="0,0,0,8"/>
+                                        <ListBox ItemsSource="{Binding ClickPoints}" SelectedItem="{Binding SelectedClickPoint}"
+                                                 MaxHeight="120" Margin="0,0,0,8">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Display}" FontFamily="{StaticResource MonoFont}" FontSize="12"/>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                        <WrapPanel>
+                                            <Button Content="{Binding [BtnAddPoint]}" Command="{Binding AddClickPointCommand}"
+                                                    Style="{StaticResource GhostButton}" Margin="0,0,8,0"/>
+                                            <Button Content="{Binding [BtnDeletePoint]}" Command="{Binding RemoveClickPointCommand}"
+                                                    Style="{StaticResource GhostButton}" Margin="0,0,8,0"/>
+                                            <Button Content="{Binding [BtnClear]}" Command="{Binding ClearClickPointsCommand}"
+                                                    Style="{StaticResource GhostButton}"/>
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
                                         <TextBlock Text="{Binding [SectionMode]}" Style="{StaticResource CardTitle}"/>
                                         <TextBlock Text="{Binding [HintMode]}" Style="{StaticResource MutedText}" Margin="0,3,0,12"/>
                                         <ItemsControl ItemsSource="{Binding ModeOptions}">
@@ -402,6 +458,10 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
+
+                                        <CheckBox Content="{Binding [CheckPauseUnfocused]}" IsChecked="{Binding PauseWhenUnfocused}"
+                                                  IsEnabled="{Binding PauseOptionEnabled}" Margin="0,10,0,0"/>
+                                        <TextBlock Text="{Binding [HintPauseUnfocused]}" Style="{StaticResource MutedText}" Margin="0,4,0,0"/>
                                     </StackPanel>
                                 </Border>
 
@@ -424,6 +484,117 @@
                     </TabItem>
 
                     <!-- ========== НАСТРОЙКИ ========== -->
+                    <TabItem Header="{Binding [TabKeys]}" Tag="{StaticResource IconKeyboard}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0"
+                                      local:SmoothScroll.IsEnabled="{Binding SmoothScrolling}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding [KeysTitle]}" FontSize="20" FontWeight="Bold"
+                                           Foreground="{DynamicResource ForegroundBrush}" Margin="2,0,0,4"/>
+                                <TextBlock Text="{Binding [KeysIntro]}" Style="{StaticResource MutedText}" Margin="2,0,0,16"/>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding [SectionKeys]}" Style="{StaticResource CardTitle}"/>
+                                            <TextBlock Text="{Binding [HintKeys]}" Style="{StaticResource MutedText}" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                        </StackPanel>
+
+                                        <ItemsControl ItemsSource="{Binding KeyBindings}" Margin="0,12,0,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{DynamicResource ControlBgBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                                                            BorderThickness="1" CornerRadius="9" Padding="10,6" Margin="0,0,0,6">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <CheckBox IsChecked="{Binding Enabled}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding Display}" FontFamily="{StaticResource MonoFont}"
+                                                                       FontSize="12.5" VerticalAlignment="Center" Foreground="{DynamicResource ForegroundBrush}"/>
+                                                            <Button Grid.Column="2" Style="{StaticResource GhostButton}" Height="26" Padding="8,0" Content="✕"
+                                                                    Command="{Binding DataContext.RemoveKeyBindingCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                    CommandParameter="{Binding}"/>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <TextBlock Text="{Binding [NoKeys]}" FontSize="11" Foreground="{DynamicResource MutedBrush}" Margin="2,4,0,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasKeyBindings}" Value="False">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+
+                                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                            <Button Content="{Binding [BtnAddKey]}" Command="{Binding AddKeyBindingCommand}"
+                                                    Style="{StaticResource PrimaryButton}" Height="36" Padding="16,0"/>
+                                            <Button Content="{Binding [BtnClearKeys]}" Command="{Binding ClearKeyBindingsCommand}"
+                                                    Style="{StaticResource GhostButton}" Height="36" Margin="8,0,0,0"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [KeysSpeed]}" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock Text="{Binding [HintKeysSpeed]}" Style="{StaticResource MutedText}" Margin="0,3,0,12"/>
+
+                                        <ItemsControl ItemsSource="{Binding KeyIntervalPresets}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <RadioButton Style="{StaticResource OptionChip}" Content="{Binding Label}"
+                                                                 IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                 Command="{Binding DataContext.SelectKeyIntervalCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                 GroupName="KeyIntervalGroup" CommandParameter="{Binding}"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                            <TextBox Text="{Binding KeyIntervalMs}" Style="{StaticResource NumberBox}" Width="76"/>
+                                            <TextBlock Text="{Binding [UnitMs]}" Style="{StaticResource FieldLabel}"/>
+                                            <TextBlock Text="{Binding KeyIntervalText}" Style="{StaticResource MutedText}"
+                                                       Margin="16,0,0,0" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <CheckBox Content="{Binding [CheckKeysSimultaneous]}" IsChecked="{Binding KeysSimultaneous}" Margin="0,0,0,6"/>
+                                        <CheckBox Content="{Binding [CheckStartKeysWithClicker]}" IsChecked="{Binding StartKeysWithClicker}"/>
+
+                                        <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                                            <Button Content="{Binding [BtnStartKeys]}" Command="{Binding StartKeysCommand}"
+                                                    Style="{StaticResource PrimaryButton}" Width="150" Height="40"/>
+                                            <Button Content="{Binding [BtnStopKeys]}" Command="{Binding StopKeysCommand}"
+                                                    Style="{StaticResource DangerButton}" Width="120" Height="40" Margin="10,0,0,0"/>
+                                            <StackPanel Margin="18,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding KeysPresses}" Style="{StaticResource StatValue}"
+                                                           FontSize="16" HorizontalAlignment="Left"/>
+                                                <TextBlock Text="{Binding [KeysPressesLabel]}" Style="{StaticResource StatLabel}"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
                     <TabItem Header="{Binding [TabSettings]}" Tag="{StaticResource IconGear}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0"
                                       local:SmoothScroll.IsEnabled="{Binding SmoothScrolling}">
@@ -651,11 +822,15 @@
 
                                 <Border Style="{StaticResource Card}">
                                     <StackPanel>
-                                        <TextBlock Text="{Binding [SectionAbout]}" Style="{StaticResource CardTitle}" Margin="0,0,0,6"/>
-                                        <TextBlock Text="{Binding [AboutText]}" Style="{StaticResource MutedText}"/>
-                                        <TextBlock Text="{Binding [HintApp]}" Style="{StaticResource MutedText}" Margin="0,4,0,0"/>
+                                        <TextBlock Text="{Binding [SectionScripts]}" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock Text="{Binding [HintScripts]}" Style="{StaticResource MutedText}" Margin="0,3,0,10"/>
+                                        <Button Content="{Binding [BtnOpenScripts]}" Style="{StaticResource GhostButton}"
+                                                HorizontalAlignment="Left" Click="OpenScripts_Click"/>
                                     </StackPanel>
                                 </Border>
+
+
+
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
@@ -695,7 +870,31 @@
                                         <TextBlock Text="{Binding [HelpAcDesc]}" Style="{StaticResource MutedText}" Margin="0,6,0,0"/>
                                     </StackPanel>
                                 </Border>
-                            </StackPanel>
+                                <Border Style="{StaticResource Card}">
+                                    <Expander Header="{Binding [SectionLuaHelp]}">
+                                        <StackPanel Margin="0,4,0,0">
+                                            <TextBlock Text="{Binding [LuaHelpIntro]}" Style="{StaticResource MutedText}" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding [LuaApiTable]}" FontFamily="{StaticResource MonoFont}" FontSize="11.5"
+                                                       Foreground="{DynamicResource ForegroundBrush}" Margin="0,10,0,0"/>
+                                            <TextBlock Text="{Binding [LuaHelpNotes]}" Style="{StaticResource MutedText}"
+                                                       TextWrapping="Wrap" Margin="0,10,0,0"/>
+                                            <Border Background="{DynamicResource InputBgBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,10,0,0">
+                                                <TextBlock Text="{Binding [LuaHelpExample]}" FontFamily="{StaticResource MonoFont}"
+                                                           FontSize="11.5" Foreground="{DynamicResource AccentBrush}" TextWrapping="Wrap"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Expander>
+                                </Border>
+
+                                                            <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding [SectionAbout]}" Style="{StaticResource CardTitle}" Margin="0,0,0,6"/>
+                                        <TextBlock Text="{Binding [AboutText]}" Style="{StaticResource MutedText}"/>
+                                        <TextBlock Text="{Binding [HintApp]}" Style="{StaticResource MutedText}" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Border>
+</StackPanel>
                         </ScrollViewer>
                     </TabItem>
                 </TabControl>

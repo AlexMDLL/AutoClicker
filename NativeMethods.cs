@@ -1,5 +1,8 @@
 using System;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Text;
 
 namespace AutoClicker
@@ -21,6 +24,10 @@ namespace AutoClicker
         public const uint MOUSEEVENTF_ABSOLUTE = 0x8000;
         public const uint MOUSEEVENTF_VIRTUALDESK = 0x4000;
         public const uint INPUT_MOUSE = 0;
+        public const uint INPUT_KEYBOARD = 1;
+        public const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
+        public const uint KEYEVENTF_KEYUP = 0x0002;
+        public const uint KEYEVENTF_UNICODE = 0x0004;
 
         // === Сообщения окну ===
         public const int WM_KEYDOWN = 0x0100;
@@ -120,9 +127,39 @@ namespace AutoClicker
             public MOUSEINPUT mi;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct KEYBDINPUT
+        {
+            public ushort wVk;
+            public ushort wScan;
+            public uint dwFlags;
+            public uint time;
+            public UIntPtr dwExtraInfo;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        public struct INPUTUNION
+        {
+            [FieldOffset(0)] public MOUSEINPUT mi;
+            [FieldOffset(0)] public KEYBDINPUT ki;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct INPUTK
+        {
+            public uint type;
+            public INPUTUNION u;
+        }
+
         // === Ввод ===
         [DllImport("user32.dll", SetLastError = true)]
         public static extern uint SendInput(uint nInputs, [In] INPUT[] pInputs, int cbSize);
+
+        [DllImport("user32.dll", EntryPoint = "SendInput", SetLastError = true)]
+        public static extern uint SendInputKeyboard(uint nInputs, [In] INPUTK[] pInputs, int cbSize);
+
+        [DllImport("user32.dll")]
+        public static extern int GetSystemMetrics(int nIndex);
 
         [DllImport("user32.dll")]
         public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, int dwExtraInfo);
@@ -162,6 +199,29 @@ namespace AutoClicker
         public static extern IntPtr WindowFromPoint(POINT point);
 
         [DllImport("user32.dll")]
+        public static extern IntPtr GetDC(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        public static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
+
+        [DllImport("gdi32.dll")]
+        public static extern uint GetPixel(IntPtr hdc, int x, int y);
+
+        /// <summary>Цвет пикселя экрана в формате #RRGGBB.</summary>
+        public static string GetScreenPixel(int x, int y)
+        {
+            IntPtr dc = GetDC(IntPtr.Zero);
+            if (dc == IntPtr.Zero) return "#000000";
+            try
+            {
+                uint color = GetPixel(dc, x, y);
+                if (color == 0xFFFFFFFF) return "#000000";
+                return $"#{(color & 0xFF):X2}{(color >> 8) & 0xFF:X2}{(color >> 16) & 0xFF:X2}";
+            }
+            finally { ReleaseDC(IntPtr.Zero, dc); }
+        }
+
+        [DllImport("user32.dll")]
         public static extern IntPtr GetAncestor(IntPtr hwnd, uint gaFlags);
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
@@ -195,9 +255,6 @@ namespace AutoClicker
 
         [DllImport("kernel32.dll")]
         public static extern uint GetCurrentThreadId();
-
-        [DllImport("user32.dll")]
-        public static extern int GetSystemMetrics(int nIndex);
 
         // === Курсор ===
         [DllImport("user32.dll")]
@@ -397,6 +454,168 @@ namespace AutoClicker
                 }
             };
             SendInput(1, new[] { up }, Marshal.SizeOf(typeof(INPUT)));
+        }
+        // === КЛАВИАТУРА ===
+
+        private static bool IsExtendedKey(ushort vk)
+        {
+            switch (vk)
+            {
+                case 0x21: case 0x22: case 0x23: case 0x24:
+                case 0x25: case 0x26: case 0x27: case 0x28:
+                case 0x2D: case 0x2E: case 0x5B: case 0x5C:
+                case 0x6F: case 0x90: case 0xA3: case 0xA5:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public static void KeyDown(ushort vk)
+        {
+            var input = new INPUTK
+            {
+                type = INPUT_KEYBOARD,
+                u = new INPUTUNION
+                {
+                    ki = new KEYBDINPUT
+                    {
+                        wVk = vk,
+                        dwFlags = IsExtendedKey(vk) ? KEYEVENTF_EXTENDEDKEY : 0
+                    }
+                }
+            };
+            SendInputKeyboard(1, new[] { input }, Marshal.SizeOf(typeof(INPUTK)));
+        }
+
+        public static void KeyUp(ushort vk)
+        {
+            var input = new INPUTK
+            {
+                type = INPUT_KEYBOARD,
+                u = new INPUTUNION
+                {
+                    ki = new KEYBDINPUT
+                    {
+                        wVk = vk,
+                        dwFlags = KEYEVENTF_KEYUP | (IsExtendedKey(vk) ? KEYEVENTF_EXTENDEDKEY : 0)
+                    }
+                }
+            };
+            SendInputKeyboard(1, new[] { input }, Marshal.SizeOf(typeof(INPUTK)));
+        }
+
+        public static void PressKey(ushort vk, int holdMs)
+        {
+            KeyDown(vk);
+            if (holdMs > 0) Thread.Sleep(holdMs);
+            KeyUp(vk);
+        }
+
+        /// <summary>Ввод одного Unicode-символа (не зависит от раскладки).</summary>
+        public static void TypeUnicodeChar(char c)
+        {
+            var down = new INPUTK
+            {
+                type = INPUT_KEYBOARD,
+                u = new INPUTUNION
+                {
+                    ki = new KEYBDINPUT { wVk = 0, wScan = c, dwFlags = KEYEVENTF_UNICODE }
+                }
+            };
+            var up = new INPUTK
+            {
+                type = INPUT_KEYBOARD,
+                u = new INPUTUNION
+                {
+                    ki = new KEYBDINPUT { wVk = 0, wScan = c, dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP }
+                }
+            };
+            SendInputKeyboard(2, new[] { down, up }, Marshal.SizeOf(typeof(INPUTK)));
+        }
+
+        // === ЭКРАН ===
+
+        public static int ScreenWidth => GetSystemMetrics(0);
+        public static int ScreenHeight => GetSystemMetrics(1);
+
+        public static bool TryGetPixel(int x, int y, out int r, out int g, out int b)
+        {
+            r = g = b = 0;
+            IntPtr dc = GetDC(IntPtr.Zero);
+            if (dc == IntPtr.Zero) return false;
+
+            try
+            {
+                uint color = GetPixel(dc, x, y);
+                if (color == 0xFFFFFFFF) return false;
+                r = (int)(color & 0xFF);
+                g = (int)((color >> 8) & 0xFF);
+                b = (int)((color >> 16) & 0xFF);
+                return true;
+            }
+            finally
+            {
+                ReleaseDC(IntPtr.Zero, dc);
+            }
+        }
+
+        public static string FindColor(int r, int g, int b, int x1, int y1, int x2, int y2, int step, int tolerance)
+        {
+            int screenWidth = ScreenWidth;
+            int screenHeight = ScreenHeight;
+
+            x1 = Math.Max(0, Math.Min(screenWidth - 1, x1));
+            x2 = Math.Max(0, Math.Min(screenWidth - 1, x2));
+            y1 = Math.Max(0, Math.Min(screenHeight - 1, y1));
+            y2 = Math.Max(0, Math.Min(screenHeight - 1, y2));
+            step = Math.Max(1, step);
+
+            int width = x2 - x1 + 1;
+            int height = y2 - y1 + 1;
+            if (width <= 0 || height <= 0) return null;
+
+            try
+            {
+                using (var bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb))
+                {
+                    using (var graphics = Graphics.FromImage(bitmap))
+                        graphics.CopyFromScreen(x1, y1, 0, 0, new Size(width, height), CopyPixelOperation.SourceCopy);
+
+                    var data = bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+                    try
+                    {
+                        var pixels = new int[width * height];
+                        for (int row = 0; row < height; row++)
+                            Marshal.Copy(IntPtr.Add(data.Scan0, row * data.Stride), pixels, row * width, width);
+
+                        for (int y = 0; y < height; y += step)
+                        {
+                            int offset = y * width;
+                            for (int x = 0; x < width; x += step)
+                            {
+                                int color = pixels[offset + x];
+                                int pr = (color >> 16) & 0xFF;
+                                int pg = (color >> 8) & 0xFF;
+                                int pb = color & 0xFF;
+
+                                if (Math.Abs(pr - r) <= tolerance && Math.Abs(pg - g) <= tolerance && Math.Abs(pb - b) <= tolerance)
+                                    return $"{x1 + x},{y1 + y}";
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        bitmap.UnlockBits(data);
+                    }
+                }
+            }
+            catch
+            {
+                return null;
+            }
+
+            return null;
         }
     }
 }
